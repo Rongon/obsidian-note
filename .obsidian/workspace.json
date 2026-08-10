@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "面试.md",
+                "file": "NodeJs.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "面试"
+              "title": "NodeJs"
             }
           }
         ]
@@ -85,7 +85,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "面试.md",
+                "file": "NodeJs.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
@@ -94,8 +94,7 @@
               "title": "大纲"
             }
           }
-        ],
-        "currentTab": 3
+        ]
       }
     ],
     "direction": "horizontal",
@@ -201,10 +200,12 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "772ec373c92781d1",
+  "active": "876524904878dd48",
   "lastOpenFiles": [
+    "面试.md",
+    "微信小程序.md",
+    "NodeJs.md",
     "计算机网络.md",
-    "Typescript.md",
-    "面试.md"
+    "Typescript.md"
   ]
 }
