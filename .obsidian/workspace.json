@@ -87,7 +87,7 @@
               "state": {
                 "file": "面试.md",
                 "followCursor": false,
-                "showSearch": false,
+                "showSearch": true,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
