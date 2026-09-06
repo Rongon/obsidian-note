@@ -3288,14 +3288,153 @@ function Parent() {
 
 #### React 如何进行性能优化？
 
+React 性能优化的核心目标是**减少不必要的组件重新渲染**和**降低首屏加载时间**。
 
+---
+- 避免不必要的重新渲染
 
+1. `React.memo`：包裹函数组件，对 props 进行浅比较
+	当父组件重新渲染时，如果子组件的 props 没有变化，`React.memo` 可以跳过子组件的渲染。
+```tsx
+import { memo } from 'react'
 
+interface ChildProps {
+  name: string
+}
 
+const Child = memo(function Child({ name }: ChildProps) {
+  console.log('Child 渲染')
+  return <div>{name}</div>
+})
 
+function Parent() {
+  const [count, setCount] = useState<number>(0)
+  const [name, setName] = useState<string>('Alice')
 
+  return (
+    <div>
+      <Child name={name} />
+      <button onClick={() => setCount(c => c + 1)}>count: {count}</button>
+    </div>
+  )
+}
+// 点击按钮更新 count 时，name 未变，Child 不会重新渲染
+```
+---
+2. `useCallback`：稳定函数引用，配合 `React.memo`
+	把回调函数传给 `React.memo` 包裹的子组件时，如果每次父组件渲染都创建新函数，会导致 `memo` 失效。用 `useCallback` 保持引用稳定。
+```tsx
+const handleClick = useCallback(() => {
+  setCount(c => c + 1)
+}, [])
 
+<Child onClick={handleClick} />
+```
+---
+3. `useMemo`：缓存昂贵计算结果
+```tsx
+const sortedList = useMemo<Item[]>(() => {
+  return items.slice().sort((a, b) => a.score - b.score)
+}, [items])
+```
+---
+- 代码分割与懒加载
+	使用 `React.lazy` + `Suspense` 实现组件懒加载，减少首屏 JS 体积。路由级别的懒加载最为常见。
+```tsx
+import { lazy, Suspense } from 'react'
 
+const Dashboard = lazy(() => import('./pages/Dashboard'))
+
+function App() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <Dashboard />
+    </Suspense>
+  )
+}
+```
+配合 `React Router`，在路由配置中使用动态 `import`。
+
+---
+- 列表渲染优化
+
+1. 使用稳定且唯一的 `key`
+	避免使用数组索引作为 `key`。索引在列表顺序改变时会导致错误的复用和状态错乱。
+```tsx
+{items.map(item => (
+  <ListItem key={item.id} item={item} />
+))}
+```
+
+2. 长列表虚拟化
+	对于上千条数据的列表，只渲染可视区域内的元素。常用库：`react-window`、`react-virtualized`。
+```tsx
+import { FixedSizeList } from 'react-window'
+
+<FixedSizeList
+  height={600}
+  width="100%"
+  itemCount={items.length}
+  itemSize={50}
+>
+  {({ index, style }) => (
+    <div style={style}>{items[index].name}</div>
+  )}
+</FixedSizeList>
+```
+---
+- 状态管理优化
+
+1. 状态局部化
+	不要把所有状态都放在顶层组件。将状态放到实际使用它的组件中，减少重渲染范围。
+
+2. 拆分 Context，避免大范围更新
+	如果 Context 的 value 频繁变化，所有消费该 Context 的组件都会重渲染。可以将不同关注点拆成多个 Context，或使用状态管理库（如 Zustand、Redux Toolkit）。
+```tsx
+const ThemeContext = createContext<string>('light')
+const UserContext = createContext<User | null>(null)
+```
+
+3. 使用 `useReducer` 管理复杂状态，减少依赖
+---
+- 不可变数据
+	不可变数据能让浅比较（`React.memo`、`shouldComponentUpdate`）正确工作。可以使用 `immer` 简化不可变更新。
+```tsx
+import produce from 'immer'
+
+const nextState = produce(state, draft => {
+  draft.user.name = 'Bob'
+})
+```
+---
+- 请求与副作用优化
+
+1. 防抖与节流
+	对于高频触发的请求（如搜索输入），使用防抖；对于滚动、resize 等，使用节流。
+
+2. 数据缓存与请求去重
+	使用 `React Query`、`SWR` 等库缓存请求结果，避免重复请求。
+
+3. `useEffect` 依赖数组正确设置，避免无限循环和多余副作用
+---
+- 构建优化
+
+- 生产构建：`npm run build` 会进行代码压缩、tree shaking。
+    
+- 分析 bundle：使用 `source-map-explorer` 或 `vite-bundle-visualizer` 定位大依赖。
+    
+- 第三方库按需引入：如 `import debounce from 'lodash/debounce'` 而不是 `import _ from 'lodash'`。
+---
+- 使用性能分析工具
+
+- **React DevTools Profiler**：录制渲染，找出耗时组件。
+    
+- **Chrome Performance**：分析 JS 执行和渲染。
+    
+- **why-did-you-render**：开发环境检测无谓重渲染。
+---
+- 展望：React Compiler（实验）
+	React 官方编译器可自动进行记忆化（memo、useMemo、useCallback），未来可能减少手动优化代码。目前处于实验阶段，需谨慎使用。
 ---
 #### 什么是 React.memo？
 
