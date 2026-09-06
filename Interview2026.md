@@ -3168,7 +3168,7 @@ useEffect(() => {
 ---
 #### useEffect 的依赖数组有什么作用？
 
-
+`useEffect` 的依赖数组用于**控制副作用函数的执行时机**，它告诉 React：只有当数组中的值在两次渲染之间发生变化时，才重新执行该副作用。
 
 
 ---
@@ -3215,7 +3215,7 @@ useEffect(() => {
 ---
 # 链接知识
 
-## **函数柯里化**①
+## **①函数柯里化**
 
 **柯里化**：把一个需要**多个参数**的函数，变成一个**每次只接收一个参数、返回一个新函数**的链式调用方式。每次调用都通过闭包记住已经传入的参数。
 
@@ -3247,7 +3247,7 @@ curryAdd(1)(2)(3) // 6
     
 - **函数组合**：在函数式编程中，柯里化让函数更容易组合和复用。
 ---
-## Generator 函数和`yield`②
+## ②Generator 函数和`yield`
 简单说，**Generator 是一个可以中途暂停并返回多次值的函数**，`yield` 是它用来“暂停并输出值”的关键字。它曾是异步流程控制的基石，但现代开发中已被 `async/await` 取代
 ```js
 // 注意 function 后面的 * 号
@@ -3265,3 +3265,120 @@ console.log(gen.next()); // { value: '结束', done: true }
 console.log(gen.next()); // { value: undefined, done: true }
 ```
 ---
+## ③useState函数式更新
+
+函数式更新是 `useState` 中一种**依赖前一个状态值来计算新状态**的更新方式。它的核心价值在于：**在多次更新排队或闭包捕获旧值时，依然能拿到最新的状态进行正确更新。**
+
+---
+- 对比
+```tsx
+const [count, setCount] = useState<number>(0)
+
+// 方式一：直接传值
+const increment1 = () => {
+  setCount(count + 1)          // 使用当前渲染中的 count 值
+}
+
+// 方式二：函数式更新
+const increment2 = () => {
+  setCount(prev => prev + 1)   // prev 是 React 保证的最新值
+}
+```
+
+两者的区别在于：**直接传值读取的是当前闭包里的 `count`，可能是过期的；函数式更新的 `prev` 永远是 React 内部最新的状态。**
+
+---
+- 闭包陷阱
+	函数组件每次渲染都会**重新执行整个函数**，产生新的闭包。如果某个回调函数（如事件处理器、`setTimeout`、`useEffect` 中的函数）捕获了某次渲染的 `count` 值，之后状态变了，这个回调里的 `count` 仍然是旧的。这就是**闭包陷阱**。
+
+ 场景一：一个事件里连续多次更新
+```tsx
+const [count, setCount] = useState<number>(0)
+
+function handleClick() {
+  // 期望：点击一次，count 加 3
+  setCount(count + 1)  // 这三次读取的都是同一个 count（旧值 0）
+  setCount(count + 1)  // 结果都是 1
+  setCount(count + 1)
+}
+// 点击一次后，count 只变成 1，而不是 3
+```
+React 会**批量处理**这些更新，但它们都基于同一个过期闭包里的 `count = 0`，所以结果是 `0 + 1 = 1`。
+
+```tsx
+function handleClick() {
+  setCount(prev => prev + 1)  // prev 依次为 0, 1, 2
+  setCount(prev => prev + 1)  // 最终 count 变成 3
+  setCount(prev => prev + 1)
+}
+```
+React 保证每次执行更新函数时，`prev` 都是**最新的状态值**，所以三个更新依次累加，结果正确。
+
+---
+ 场景二：setTimeout 中的旧值
+```tsx
+const [count, setCount] = useState<number>(0)
+
+function handleClick() {
+  setTimeout(() => {
+    setCount(count + 1)  // count 是点击时闭包里的旧值
+  }, 1000)
+}
+
+// 点击按钮后，count 从 0 变成 1
+// 如果在 setTimeout 触发前再次点击，count 仍然只会变成 1
+// 因为两次 setTimeout 捕获的 count 都是 0
+```
+
+使用函数式更新：
+```tsx
+setTimeout(() => {
+  setCount(prev => prev + 1)  // prev 是触发时最新的值
+}, 1000)
+```
+
+---
+ useEffect 中的闭包陷阱
+```tsx
+useEffect(() => {
+  const timer = setInterval(() => {
+    console.log(count)  // 始终打印旧值 0
+  }, 1000)
+  return () => clearInterval(timer)
+}, [])  // 空依赖，只在挂载时执行一次，捕获了初始 count
+```
+
+修复方式：要么把 `count` 加入依赖数组，要么使用函数式更新：
+```tsx
+// 方式一：依赖数组
+useEffect(() => {
+  const timer = setInterval(() => {
+    console.log(count)
+  }, 1000)
+  return () => clearInterval(timer)
+}, [count])
+
+// 方式二：函数式更新（如果只是更新同一个状态）
+useEffect(() => {
+  const timer = setInterval(() => {
+    setCount(prev => prev + 1)
+  }, 1000)
+  return () => clearInterval(timer)
+}, [])
+```
+
+---
+推荐函数式更新：
+
+| 优势          | 说明                           |
+| ----------- | ---------------------------- |
+| **正确性**     | 保证拿到的 `prev` 永远是最新值，不受闭包过期影响 |
+| **批量更新安全**  | React 18 自动批处理下，多次更新能正确累加    |
+| **不依赖外部闭包** | 不需要把状态加入依赖数组，减少心智负担          |
+| **适用场景广**   | 事件处理、定时器、订阅、异步回调等            |
+
+---
+
+
+
+
