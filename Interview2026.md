@@ -3192,23 +3192,134 @@ React 使用依赖数组来**跳过不必要的副作用执行**，避免性能�
 ---
 #### useMemo 和 useCallback 有什么区别？
 
-
+核心区别：
 
 
 ---
 #### 如何自定义 Hooks？
 
+|Hook|返回值|用途|
+|---|---|---|
+|`useMemo`|缓存**计算结果**（值）|记忆化昂贵计算，依赖不变时跳过重新计算|
+|`useCallback`|缓存**函数引用**|记忆化函数，避免因函数引用变化导致子组件重渲染|
+
+简单记忆：`useMemo` 返回一个**值**，`useCallback` 返回一个**函数**。
+
+---
+- useMemo：缓存计算结果
+
+```tsx
+import { useMemo, useState } from 'react'
+
+interface Item {
+  id: number
+  name: string
+}
+
+function ExpensiveList({ items }: { items: Item[] }) {
+  const [filter, setFilter] = useState<string>('')
+
+  // 只有 items 或 filter 变化时才重新计算过滤结果
+  const filteredItems = useMemo<Item[]>(() => {
+    console.log('重新计算过滤列表')
+    return items.filter(item => item.name.includes(filter))
+  }, [items, filter])
+
+  return (
+    <ul>
+      {filteredItems.map(item => (
+        <li key={item.id}>{item.name}</li>
+      ))}
+    </ul>
+  )
+}
+```
+
+ - useCallback：缓存函数引用
+```tsx
+import { useCallback, useState } from 'react'
+
+interface ChildProps {
+  onClick: () => void
+}
+
+const MemoizedChild = React.memo(function Child({ onClick }: ChildProps) {
+  console.log('子组件渲染')
+  return <button onClick={onClick}>点击</button>
+})
+
+function Parent() {
+  const [count, setCount] = useState<number>(0)
+  const [other, setOther] = useState<number>(0)
+
+  // 只有 count 变化时才创建新函数，否则保持引用不变
+  const handleClick = useCallback(() => {
+    setCount(prev => prev + 1)
+  }, [count])
+
+  return (
+    <div>
+      <MemoizedChild onClick={handleClick} />
+      <button onClick={() => setOther(o => o + 1)}>更新 other</button>
+    </div>
+  )
+}
+```
+---
+使用场景：
+
+|场景|推荐|
+|---|---|
+|复杂计算（如大数据过滤、排序）|`useMemo`|
+|传给子组件的回调函数，且子组件用 `React.memo` 包裹|`useCallback`|
+|依赖数组中的对象/数组需要保持引用稳定|`useMemo`|
+|自定义 Hook 返回的函数需要稳定引用|`useCallback`|
+
+---
+注意事项：
+
+- **不要过度使用**：它们本身有内存和比较开销，不是所有函数和值都需要缓存。优先考虑代码可读性。
+    
+- **依赖数组遗漏**会导致缓存不更新，产生 bug。使用 ESLint 的 `react-hooks/exhaustive-deps` 规则检查。
+    
+- **React Compiler**（实验阶段）未来可能自动优化，减少手动使用这些 Hook 的需求。
+---
+### **性能优化：**
+
+#### React 如何进行性能优化？
+
+
+
+
+
 
 
 
 
 ---
-### **性能优化：**
+#### 什么是 React.memo？
 
-1. React 如何进行性能优化？
-2. 什么是 React.memo？
-3. 虚拟 DOM 的 Diff 算法是怎样的？
 
+
+
+
+
+
+
+
+---
+#### 虚拟 DOM 的 Diff 算法是怎样的？
+
+
+
+
+
+
+
+
+
+
+---
 ### **状态管理：**
 
 1. Context API 如何使用？
