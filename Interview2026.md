@@ -3635,14 +3635,118 @@ createElementVNode("div", {
 
 #### Context API 如何使用？
 
+`Context API` 是 React 提供的一种**跨组件层级共享数据**的机制，避免了通过 props 逐层传递（props drilling）。它适用于全局状态，如主题、语言、用户登录信息等。类似 vue 的 provide/inject 。
 
+---
+- 核心三步骤
 
+1. **创建 Context**：使用 `createContext` 创建上下文对象。
+    
+2. **提供数据**：在父组件中使用 `<Context.Provider value={...}>` 包裹子组件。
+    
+3. **消费数据**：在任意子组件中使用 `useContext` 获取上下文值。
+---
+- 示例
+1. 定义 Context 和类型
+```tsx
+// ThemeContext.tsx
+import { createContext, useContext, useState } from 'react'
 
+type Theme = 'light' | 'dark'
 
+interface ThemeContextType {
+  theme: Theme
+  toggleTheme: () => void
+}
 
+// 创建 Context（默认值可为 undefined，使用时会检查）
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
+// 自定义 Hook：封装 useContext，并做空值检查
+export function useTheme(): ThemeContextType {
+  const context = useContext(ThemeContext)
+  if (!context) {
+    throw new Error('useTheme 必须在 ThemeProvider 内部使用')
+  }
+  return context
+}
 
+// Provider 组件
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const [theme, setTheme] = useState<Theme>('light')
 
+  const toggleTheme = (): void => {
+    setTheme(prev => (prev === 'light' ? 'dark' : 'light'))
+  }
+
+  // 使用 useMemo 保持 value 引用稳定，避免不必要的重渲染
+  const value = useMemo<ThemeContextType>(() => ({ theme, toggleTheme }), [theme])
+
+  return (
+    <ThemeContext.Provider value={value}>
+      {children}
+    </ThemeContext.Provider>
+  )
+}
+```
+
+2. 在应用最外层使用 Provider
+```tsx
+// App.tsx
+import { ThemeProvider } from './ThemeContext'
+
+function App() {
+  return (
+    <ThemeProvider>
+      <Header />
+      <MainContent />
+    </ThemeProvider>
+  )
+}
+```
+
+3. 在任意深层子组件中消费
+```tsx
+// Header.tsx
+import { useTheme } from './ThemeContext'
+
+function Header() {
+  const { theme, toggleTheme } = useTheme()
+
+  return (
+    <header style={{ background: theme === 'light' ? '#fff' : '#333' }}>
+      <button onClick={toggleTheme}>
+        切换主题（当前：{theme}）
+      </button>
+    </header>
+  )
+}
+```
+---
+- 常见优化：防止无谓的重新渲染
+	当 Provider 的 `value` 是一个新对象时，每次 Provider 所在组件渲染，所有消费该 Context 的子组件都会重新渲染。即使数据没有实际变化。
+
+1. 使用 `useMemo` 稳定 `value`
+```tsx
+const value = useMemo(() => ({ theme, toggleTheme }), [theme])
+```
+
+2. 拆分 Context
+	将不同关注点拆分为独立的 Context，避免一个 Context 变化影响所有消费者。
+```tsx
+const ThemeContext = createContext<Theme>('light')
+const UserContext = createContext<User | null>(null)
+```
+---
+- 注意事项
+
+- **不要在 Context 中存频繁变化的数据**：如输入框内容。Context 适合低频更新的全局数据。
+    
+- **默认值**：`createContext` 的默认值只在没有 Provider 时生效。
+    
+- **性能**：Provider value 引用变化会导致所有消费者重新渲染，因此务必用 `useMemo` 或状态提升。
+    
+- **与状态管理库的选择**：Context 适合简单全局状态，复杂状态可考虑 Zustand、Redux 等。
 ---
 #### Redux 的工作原理是什么？
 
