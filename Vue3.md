@@ -169,7 +169,6 @@ https://cn.vuejs.org/guide/components/attrs.html
 
 6. 可以在 `<script setup>` 中使用 `useAttrs()` API 来访问一个组件的所有透传 attribute：
 
-7. 
 
 ---
 
