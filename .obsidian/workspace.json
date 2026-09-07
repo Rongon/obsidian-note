@@ -20,6 +20,20 @@
               "icon": "lucide-file",
               "title": "Interview2026"
             }
+          },
+          {
+            "id": "49ee7718183921d5",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "ComputerNetwork.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "ComputerNetwork"
+            }
           }
         ]
       }
@@ -203,6 +217,8 @@
   },
   "active": "876524904878dd48",
   "lastOpenFiles": [
+    "ComputerNetwork.md",
+    "Interview2026.md",
     "React文档笔记.md",
     "面试.md",
     "VueRouter.md",

@@ -3521,6 +3521,119 @@ const UserCard = memo(
 ---
 #### 虚拟 DOM 的 Diff 算法是怎样的？
 
+虚拟 DOM 的 Diff 算法用于在状态变化时高效地对比新旧两棵虚拟 DOM 树，找出最小差异并更新真实 DOM。React 和 Vue 的 Diff 算法都基于三个核心假设，但在实现上有差异。
+
+---
+- 核心假设（将 O(n³) 降到 O(n)）
+
+1. **只做同层比较**：不跨层级比较节点。跨层级移动的节点直接销毁重建。
+    
+2. **节点类型不同，直接替换**：`div` 变 `p` 时，不比较其子节点，直接销毁旧节点并创建新节点。
+    
+3. **通过 `key` 识别可复用节点**：同一层级下，`key` 相同的节点会被复用，只更新其属性和子节点。
+---
+- React 的 Diff 策略
+	React 采用**单向递归比较**。从根节点开始，逐层对比。对于同一层的子节点，按顺序依次比较：
+```tsx
+// 简化的 React Diff 逻辑（TypeScript）
+function diffChildren(oldVNode, newVNode) {
+  // 1. 先比较相同位置的节点
+  oldVNode.children.forEach((oldChild, i) => {
+    const newChild = newVNode.children[i];
+
+    // 2. key 相同或类型相同，则复用
+    if (oldChild.key === newChild.key && oldChild.type === newChild.type) {
+      updateNode(oldChild, newChild);
+    } else {
+      // 3. 否则销毁旧节点，创建新节点
+      replaceNode(oldChild, newChild);
+    }
+  });
+}
+```
+**特点**：递归不可中断（React 16 前），React 16 引入 Fiber 后可以切片，但比较逻辑仍是同层顺序比较。
+
+---
+- Vue 3 的 Diff 策略
+
+Vue 3 的 Diff 比 React 更高效，主要在编译时做了优化：
+
+1. 双端比较
+	对于未标记稳定的列表节点，Vue 使用双端比较（头头、尾尾、头尾、尾头），减少节点移动：
+```ts
+// 简化伪代码
+let oldStartIdx = 0, oldEndIdx = oldChildren.length - 1;
+let newStartIdx = 0, newEndIdx = newChildren.length - 1;
+
+while (oldStartIdx <= oldEndIdx && newStartIdx <= newEndIdx) {
+  // 头头比较
+  // 尾尾比较
+  // 头尾比较
+  // 尾头比较
+}
+```
+
+2. 最长递增子序列
+	对于中间未匹配的节点，Vue 3 使用**最长递增子序列**算法来最小化节点移动：
+```ts
+// 找出最长递增子序列，保持这些节点不动
+function getSequence(arr: number[]): number[] {
+  // 返回最长递增子序列的索引
+}
+```
+
+3. 编译时优化（Vue 3 独有）
+
+Vue 3 编译器在编译模板时做了大量优化：
+
+- **静态提升**：把不变静态节点提升到渲染函数外，避免重复创建。
+    
+- **Patch Flag**：标记节点上动态部分（class、text、props），运行时只检查这些部分。
+    
+- **Block Tree**：收集动态节点到扁平数组，diff 时只遍历这个数组，跳过静态节点。
+```ts
+// 编译后的渲染函数带 patch flag
+createElementVNode("div", {
+  class: _normalizeClass({ active: _ctx.active })
+}, null, 2 /* CLASS */)
+// 运行时只更新 class，其余部分跳过
+```
+---
+- `key` 的作用与常见误区
+
+**作用**：`key` 用于识别同一层级的节点是否可复用。相同 `key` 的节点会被复用并更新，不同 `key` 的则销毁重建。
+
+**为什么不能用 `index` 作为 key？**
+```ts
+// ❌ 使用 index 作为 key
+{items.map((item, index) => (
+  <ListItem key={index} item={item} />
+))}
+```
+
+当列表头部插入新项时，所有后续项的 `index` 都变了。React 会认为所有节点的 key 都变化了，导致大量不必要的销毁重建，还可能引起状态错乱。
+
+**正确做法**：使用稳定且唯一的标识，如 `item.id`：
+```ts
+// ✅ 使用稳定的唯一 id
+{items.map(item => (
+  <ListItem key={item.id} item={item} />
+))}
+```
+---
+- React 与 Vue 的 Diff 对比
+
+|特性|React|Vue 3|
+|---|---|---|
+|**比较方式**|单向递归，按顺序比较|双端比较 + 最长递增子序列|
+|**编译时优化**|较少（React Compiler 实验中）|大量（静态提升、patch flag、block tree）|
+|**节点移动优化**|较简单，移动可能较多|用最长递增子序列最小化移动|
+|**可中断性**|Fiber 架构支持可中断异步渲染|Vue 的渲染是同步的，但优化减少了工作量
+
+---
+### **状态管理：**
+
+#### Context API 如何使用？
 
 
 
@@ -3531,10 +3644,17 @@ const UserCard = memo(
 
 
 ---
-### **状态管理：**
+#### Redux 的工作原理是什么？
 
-1. Context API 如何使用？
-2. Redux 的工作原理是什么？
+
+
+
+
+
+
+
+
+
 ---
 # 计算机网络
 ## 经典面试题
