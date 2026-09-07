@@ -3438,14 +3438,86 @@ const nextState = produce(state, draft => {
 ---
 #### 什么是 React.memo？
 
+`React.memo` 是一个高阶组件（HOC），用于**包裹函数组件**，对组件的 `props` 进行**浅比较**。只有当 `props` 发生变化时，组件才会重新渲染；如果 `props` 没有变化，React 会跳过渲染并复用上一次的结果。
 
+---
+1. 作用
 
+- **避免不必要的重新渲染**：当父组件重新渲染时，如果传给子组件的 `props` 没有变化，`React.memo` 可以阻止子组件跟着重新渲染。
+    
+- **性能优化**：适合渲染开销大、且 `props` 变化不频繁的组件。
+---
+2. 示例
+```tsx
+import { memo } from 'react'
 
+interface UserCardProps {
+  name: string
+  age: number
+}
 
+// 使用 memo 包裹函数组件
+const UserCard = memo(function UserCard({ name, age }: UserCardProps) {
+  console.log('UserCard 渲染')
+  return <div>{name} - {age}岁</div>
+})
 
+function Parent() {
+  const [count, setCount] = useState<number>(0)
+  const [user, setUser] = useState<{ name: string; age: number }>({
+    name: 'Alice',
+    age: 30
+  })
 
+  return (
+    <div>
+      <UserCard name={user.name} age={user.age} />
+      <button onClick={() => setCount(c => c + 1)}>count: {count}</button>
+    </div>
+  )
+}
+```
+当点击按钮更新 `count` 时，父组件 `Parent` 重新渲染，但 `UserCard` 的 `props`（`name` 和 `age`）没有变化，所以 `UserCard` 不会重新渲染，控制台不会打印 “UserCard 渲染”。
 
+---
+3. 浅比较的局限
 
+`React.memo` 默认进行**浅比较**：对于基本类型，比较值；对于对象和数组，只比较引用。如果父组件每次渲染都创建新的对象或数组（即使内容相同），`React.memo` 会认为 `props` 变了，从而重新渲染子组件。
+
+```tsx
+// 错误示例：每次渲染都创建新对象
+<Child user={{ name: 'Alice' }} />
+```
+
+解决方法是：
+- 使用 `useMemo` 保持对象引用稳定。
+    
+- 使用 `useCallback` 保持函数引用稳定。
+    
+- 传入 `React.memo` 第二个参数（自定义比较函数）进行深度比较（不推荐频繁使用，有性能开销）。
+---
+4. 自定义比较函数
+
+`React.memo` 的第二个参数是一个比较函数，返回 `true` 表示不重新渲染，返回 `false` 表示重新渲染。
+
+```tsx
+const UserCard = memo(
+  function UserCard({ name, age }: UserCardProps) {
+    return <div>{name} - {age}岁</div>
+  },
+  (prevProps, nextProps) => {
+    return prevProps.name === nextProps.name && prevProps.age === nextProps.age
+  }
+)
+```
+
+5. 注意事项
+
+- **不要滥用**：`React.memo` 本身有比较开销。对于简单组件，可能不划算。应先用 Profiler 定位性能瓶颈。
+    
+- **配合 `useCallback` 和 `useMemo`**：当 `props` 包含函数或对象时，需要先保证它们的引用稳定，否则 `React.memo` 失效。
+    
+- **类组件**：类组件应使用 `PureComponent` 或 `shouldComponentUpdate`，而不是 `React.memo`。
 ---
 #### 虚拟 DOM 的 Diff 算法是怎样的？
 
