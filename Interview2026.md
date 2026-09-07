@@ -3750,6 +3750,312 @@ const UserContext = createContext<User | null>(null)
 ---
 #### Redux 的工作原理是什么？
 
+Redux 是一个**可预测的状态容器**，其工作原理围绕**单一数据源、状态只读、纯函数修改**三大原则展开。
+
+---
+1. 核心概念
+
+| 概念            | 作用                               |
+| ------------- | -------------------------------- |
+| **Store**     | 全局唯一的状态树，保存整个应用的状态               |
+| **Action**    | 描述“发生了什么”的普通对象，必须包含 `type` 字段    |
+| **Reducer**   | 纯函数，接收旧 state 和 action，返回新 state |
+| **Dispatch**  | 派发 action 的唯一方式                  |
+| **Subscribe** | 订阅 state 变化，触发 UI 更新             |
+
+---
+2. 数据流（单向）
+```
+View（用户交互）
+  → Dispatch(action)
+    → Reducer(state, action)
+      → 返回新的 state
+        → Store 更新
+          → 通知订阅者（React 组件重新渲染）
+```
+---
+3. 示例
+```ts
+// 1. 定义 Action 类型
+type Action =
+  | { type: 'counter/increment' }
+  | { type: 'counter/decrement' }
+  | { type: 'counter/add', payload: number }
+
+// 2. 定义 State 类型
+interface CounterState {
+  count: number
+}
+
+// 3. 初始 state
+const initialState: CounterState = { count: 0 }
+
+// 4. Reducer：纯函数，根据 action 返回新 state
+function counterReducer(
+  state: CounterState = initialState,
+  action: Action
+): CounterState {
+  switch (action.type) {
+    case 'counter/increment':
+      return { ...state, count: state.count + 1 }
+    case 'counter/decrement':
+      return { ...state, count: state.count - 1 }
+    case 'counter/add':
+      return { ...state, count: state.count + action.payload }
+    default:
+      return state
+  }
+}
+
+// 5. 创建 store（通常使用 @reduxjs/toolkit 更简洁，这里展示原理）
+import { createStore, Dispatch } from 'redux'
+
+const store = createStore(counterReducer)
+
+// 6. 派发 action
+store.dispatch({ type: 'counter/increment' })
+console.log(store.getState()) // { count: 1 }
+
+// 7. 订阅变化
+const unsubscribe = store.subscribe(() => {
+  console.log('State 更新了', store.getState())
+})
+
+store.dispatch({ type: 'counter/add', payload: 5 })
+// 输出：State 更新了 { count: 6 }
+
+unsubscribe()
+```
+---
+4. 为什么 Redux 可预测？
+
+- **单一数据源**：整个应用只有一个 store，状态集中管理。
+    
+- **状态只读**：只能通过 `dispatch(action)` 修改，不允许直接改 state。
+    
+- **纯函数 reducer**：给定相同的 state 和 action，永远返回相同的新 state，无副作用，便于测试和时间旅行调试。
+---
+5. 异步处理与中间件
+	Reducer 是纯函数，不能处理异步。Redux 通过**中间件**（如 redux-thunk、redux-saga）在 action 到达 reducer 前拦截并处理异步逻辑。
+```ts
+// redux-thunk 示例：action 可以是函数
+const fetchUser = (id: number) => async (dispatch: Dispatch) => {
+  dispatch({ type: 'user/loading' })
+  try {
+    const res = await fetch(`/api/users/${id}`)
+    const user = await res.json()
+    dispatch({ type: 'user/success', payload: user })
+  } catch {
+    dispatch({ type: 'user/error' })
+  }
+}
+```
+---
+6. 现代 Redux：Redux Toolkit
+	实际项目中推荐使用 **Redux Toolkit (RTK)**，它简化了样板代码：
+```ts
+import { createSlice, configureStore } from '@reduxjs/toolkit'
+
+const counterSlice = createSlice({
+  name: 'counter',
+  initialState: { count: 0 },
+  reducers: {
+    increment(state) { state.count++ }, // 内部使用 immer 实现可变写法
+    add(state, action: PayloadAction<number>) { state.count += action.payload }
+  }
+})
+
+export const { increment, add } = counterSlice.actions
+export const store = configureStore({ reducer: counterSlice.reducer })
+```
+---
+# 计算机网络
+## 经典面试题
+---
+### 计算机网络分层结构，各层有哪些常用协议？【高频】
+
+- OSI 七层模型与常用协议
+
+| 层级  | 名称    | 功能                 | 常用协议/标准                           |
+| --- | ----- | ------------------ | --------------------------------- |
+| 7   | 应用层   | 为应用程序提供网络服务        | HTTP、HTTPS、FTP、SMTP、DNS、WebSocket |
+| 6   | 表示层   | 数据格式化、加密、压缩        | TLS/SSL（属于表示层的一部分）、JPEG、ASCII     |
+| 5   | 会话层   | 建立、管理、终止会话         | RPC、NetBIOS                       |
+| 4   | 传输层   | 端到端传输、差错控制、流量控制    | TCP、UDP                           |
+| 3   | 网络层   | 逻辑寻址、路由选择          | IP、ICMP、ARP、RIP、OSPF、BGP          |
+| 2   | 数据链路层 | 物理寻址（MAC）、成帧、差错校验  | Ethernet（以太网）、PPP、HDLC、交换机        |
+| 1   | 物理层   | 定义物理设备接口、电气特性、比特传输 | RS-232、RJ45、光纤、集线器                |
+
+---
+- TCP/IP 四层模型与常用协议
+
+| 层级    | 对应 OSI      | 功能        | 常用协议                                         |
+| ----- | ----------- | --------- | -------------------------------------------- |
+| 应用层   | 应用层+表示层+会话层 | 面向用户的应用服务 | HTTP、HTTPS、FTP、DNS、SMTP、Telnet、SSH、WebSocket |
+| 传输层   | 传输层         | 端到端通信     | TCP、UDP                                      |
+| 网络层   | 网络层         | 路由与逻辑寻址   | IP（IPv4/IPv6）、ICMP、ARP、RARP、路由协议             |
+| 网络接口层 | 数据链路层+物理层   | 物理网络传输    | Ethernet、Wi-Fi、PPP、帧中继                       |
+
+---
+- 前端重点
+
+- **应用层**：HTTP/HTTPS 的请求/响应机制、状态码、缓存、Cookie、WebSocket 等。
+    
+- **传输层**：TCP 的三次握手四次挥手、UDP 的特点、TCP 与 UDP 区别。
+    
+- **网络层**：IP 地址、DNS 解析过程（DNS 属于应用层，但涉及 IP）。
+    
+- **TLS/SSL**：HTTPS 的加密握手流程，常在前端性能与安全中涉及。
+---
+### TCP 和 UDP 协议的区别？如何选择应用哪个协议？【高频】
+
+**一句话总结**：需要可靠、有序传输就选 TCP；需要高速、低延迟、可容忍少量丢失就选 UDP。
+
+---
+- TCP 和 UDP 的区别
+
+| 对比维度          | TCP                   | UDP                 |
+| ------------- | --------------------- | ------------------- |
+| **连接性**       | 面向连接（先建立连接，再通信）       | 无连接（直接发送数据报）        |
+| **可靠性**       | 可靠：数据无差错、不丢失、不重复、按序到达 | 不可靠：不保证数据到达，可能丢失、乱序 |
+| **传输形式**      | 字节流（Stream）           | 数据报（Datagram）       |
+| **流量控制/拥塞控制** | 有（滑动窗口、慢启动、拥塞避免等）     | 无                   |
+| **头部开销**      | 较大（至少 20 字节）          | 较小（8 字节）            |
+| **传输效率**      | 相对较慢（需确认、重传）          | 快，开销小               |
+| **双工性**       | 全双工                   | 全双工                 |
+| **应用场景**      | 需要可靠传输的场景             | 对速度要求高、容忍少量丢失的场景    |
+
+---
+- 使用场景：
+
+| 应用场景                     | 使用协议 | 选择原因                   |
+| ------------------------ | ---- | ---------------------- |
+| **网页/接口请求**（HTTP/HTTPS）  | TCP  | 数据必须完整、准确，不能丢失         |
+| **文件传输**（FTP）            | TCP  | 文件内容要求绝对可靠，不能有差错       |
+| **邮件收发**（SMTP/POP3/IMAP） | TCP  | 邮件正文和附件必须完整到达          |
+| **远程登录**（SSH/Telnet）     | TCP  | 命令输入和输出需要有序、无误         |
+| **音视频通话/直播**（WebRTC等）    | UDP  | 低延迟优先，少量丢包可接受，重传反而导致卡顿 |
+| **域名查询**（DNS）            | UDP  | 请求包小，快速响应，丢失可简单重试      |
+| **在线游戏**（实时对战）           | UDP  | 实时性优先，重传造成延迟影响体验       |
+| **局域网自动获取IP**（DHCP）      | UDP  | 广播请求，无需建立连接，快速分配       |
+
+**前端相关补充**：HTTP/3 使用基于 UDP 的 QUIC 协议，以解决 TCP 队头阻塞等问题，提升网页加载性能。WebRTC 使用 UDP 传输音视频流。
+
+---
+### TCP 为什么需要三次握手和四次挥手？为什么不是两次握手、四次握手？为什么不是三次挥手？【高频】
+
+- TCP 三次握手的原因
+
+三次握手的核心目标是 **确认双方的收发能力**，并**同步初始序列号**。
+
+| 握手次数 | 方向        | 作用                                |
+| ---- | --------- | --------------------------------- |
+| 第一次  | 客户端 → 服务端 | 客户端发送 SYN，表明“我要连你，我的初始序列号是 X”     |
+| 第二次  | 服务端 → 客户端 | 服务端回复 SYN+ACK，表明“我收到了，我的初始序列号是 Y” |
+| 第三次  | 客户端 → 服务端 | 客户端回复 ACK，表明“我也收到了，开始传数据吧”        |
+
+---
+- **为什么不是两次握手？**
+
+两次握手只能确认客户端的发送能力和服务端的接收能力，但服务端无法确认自己的发送能力是否正常。如果只有两次，服务端在第二次发送 SYN+ACK 后就认为连接已建立，但客户端可能并没有收到，或者客户端的 ACK 丢失了。这样服务端就会在客户端未就绪时发送数据，造成资源浪费。
+
+---
+- **为什么不是四次握手？**
+
+三次已经完成了“双方确认”的目标。第三次的 ACK 是对第二次 SYN 的确认，客户端发出后，双方都确认了自己的发送和接收能力。第四次是多余的，只会增加延迟。
+
+---
+- TCP 四次挥手的原因
+
+四次挥手的目标是 **双向关闭** 一个全双工的 TCP 连接。因为 TCP 连接是双向的，每个方向都需要独立关闭。
+
+|挥手次数|方向|作用|
+|---|---|---|
+|第一次|主动方 → 被动方|发送 FIN，表示“我没有数据要发了，我要关闭”|
+|第二次|被动方 → 主动方|回复 ACK，表示“我知道你要关了”|
+|第三次|被动方 → 主动方|发送 FIN，表示“我也没有数据要发了，我也要关闭”|
+|第四次|主动方 → 被动方|回复 ACK，表示“好的，关闭吧”|
+
+---
+- **为什么不是三次挥手？**
+
+因为 TCP 是全双工的，主动方关闭发送方向后，被动方可能还有数据要发送，不能立刻关闭。所以被动方的 ACK 和 FIN 通常不能合并。只有在被动方也没有数据要发时，ACK 和 FIN 才可能在同一个包中发送（这时三次挥手也可能发生，但标准模型是四次）。
+
+---
+- **为什么不是三次挥手？** 核心在于 **被动方需要时间处理剩余数据**，所以 ACK 和 FIN 分离。三次挥手只在特殊情况（被动方无数据要发且允许延迟确认）下才可能发生，但标准设计按四次挥手考虑。
+---
+### TCP 滑动窗口和拥塞控制机制
+
+TCP 通过**滑动窗口**实现流量控制，通过**拥塞控制**避免网络拥塞。两者共同决定发送方的发送速率。
+
+---
+- 滑动窗口（流量控制）
+
+1. 作用
+	解决**发送方速度过快导致接收方缓冲区溢出**的问题。接收方通过 TCP 报文头中的“窗口大小”字段告知发送方自己还能接收多少数据，发送方据此调整发送量。
+
+---
+2. 工作原理
+- 发送方维护一个**发送窗口**，窗口大小由接收方通告的 `rwnd`（接收窗口）决定。
+    
+- 窗口内的数据可以连续发送，无需等待确认。
+    
+- 每收到一个 ACK，窗口向前滑动，继续发送后续数据。
+    
+- 窗口大小动态变化：接收方根据自身缓冲区剩余空间调整 `rwnd`。
+    
+
+---
+**示例（简化）**：
+```
+发送方窗口 [1,2,3,4,5] → 发送 1,2,3
+收到 ACK 2 → 窗口滑动为 [3,4,5,6,7]，继续发送 4,5
+```
+
+**关键点**：滑动窗口实现的是**流量控制**，防止接收方过载。
+
+---
+- 拥塞控制
+
+1. 作用
+	解决**网络中路由器缓存溢出、整体网络过载**的问题。拥塞控制是全局性的，发送方通过探测网络状况调整发送速率。
+
+---
+2. 四个核心算法
+
+|算法|阶段|行为|
+|---|---|---|
+|**慢启动**|连接建立初期|`cwnd` 从 1 开始，每收到一个 ACK 指数增长（×2），直到达到慢启动阈值 `ssthresh`|
+|**拥塞避免**|`cwnd >= ssthresh` 后|`cwnd` 线性增长（每个 RTT +1），避免过快增长|
+|**快重传**|收到 3 个重复 ACK|立即重传丢失的报文段，不等待超时|
+|**快恢复**|快重传之后|将 `ssthresh` 设为当前 `cwnd/2`，`cwnd` 设为 `ssthresh`，进入拥塞避免阶段|
+
+**拥塞窗口 `cwnd`** 是发送方根据网络状况自行维护的变量。
+
+---
+- 滑动窗口与拥塞控制的区别与联系
+
+|对比|滑动窗口|拥塞控制|
+|---|---|---|
+|**目的**|端到端**流量控制**，保护接收方|全局**拥塞控制**，保护网络|
+|**依据**|接收方通告的 `rwnd`|发送方探测的 `cwnd`|
+|**控制范围**|单个连接|整个网络|
+|**实现位置**|接收方 → 发送方|发送方自身算法|
+
+**发送方实际窗口大小** = `min(rwnd, cwnd)`。发送方取两者较小值，既保证接收方不被淹没，也避免网络拥塞。
+
+---
+### TCP 如何保证可靠性？
+
+
+
+
+
+
+
+
+---
+### HTTP 协议常用状态码和含义
 
 
 
@@ -3760,22 +4066,83 @@ const UserContext = createContext<User | null>(null)
 
 
 ---
-# 计算机网络
-## 经典面试题
+### HTTP 和 HTTPS 协议的区别？【高频】
 
-1. 计算机网络分层结构，各层有哪些常用协议？【高频】
-2. TCP 和 UDP 协议的区别？如何选择应用哪个协议？【高频】
-3. TCP 为什么需要三次握手和四次挥手？为什么不是两次握手、四次握手？为什么不是三次挥手？【高频】
-4. TCP 滑动窗口和拥塞控制机制
-5. TCP 如何保证可靠性？
-6. HTTP 协议常用状态码和含义
-7. HTTP 和 HTTPS 协议的区别？【高频】
-8. HTTPS 的原理、请求流程？
-9. HTTP 2 为什么快？
-10. HTTP 的短连接和长连接，以及如何选择？
-11. POST 和 GET 请求的区别【高频】
-12. 浏览器中输入URL 返回页面的过程？（包括 DNS 解析过程）【高频】
-13. Cookie 和 Session 的区别？
+
+
+
+
+
+
+
+
+---
+### HTTPS 的原理、请求流程？
+
+
+
+
+
+
+
+
+
+---
+### HTTP 2 为什么快？
+
+
+
+
+
+
+
+
+
+---
+### HTTP 的短连接和长连接，以及如何选择？
+
+
+
+
+
+
+
+
+
+---
+### POST 和 GET 请求的区别【高频】
+
+
+
+
+
+
+
+
+
+---
+### 浏览器中输入URL 返回页面的过程？（包括 DNS 解析过程）【高频】
+
+
+
+
+
+
+
+
+
+---
+### Cookie 和 Session 的区别？
+
+
+
+
+
+
+
+
+
+
 ---
 # 链接知识
 
