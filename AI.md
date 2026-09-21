@@ -11,7 +11,17 @@ https://www.bilibili.com/opus/1204835680577912867
 ![image.png](https://raw.githubusercontent.com/Rongon/obsidian-note/main/20260921083005072.png)
 
 ---
-Open Code Review/frontend-design/UI UX Pro Max/skill creater/
+Open Code Review/frontend-design/UI UX Pro Max/skill creater/super power(工作流)/awosome claude skull/
+
+---
+## DSH插件
+
+dsh-web-ui/dsh-better-sidebar/ModLens(视觉能力)/dsh-routing-suite(增强思维)/whale-girl/dsh-agent-teams/dsh-context(查看上下文)/
+
+---
+## MCP扩展
+
+firecrawl-mcp/Context7
 
 ---
 ## 杂项知识点
@@ -21,6 +31,10 @@ Open Code Review/frontend-design/UI UX Pro Max/skill creater/
 ![image.png](https://raw.githubusercontent.com/Rongon/obsidian-note/main/20260920102838826.png)
 
 ---
+AI应用开发流程：
 
-## dsh插件：
-dsh-web-ui/dsh-better-sidebar/ModLens(视觉能力)/dsh-routing-suite(增强思维)/whale-girl/dsh-agent-teams/dsh-context(查看上下文)/
+![image.png](https://raw.githubusercontent.com/Rongon/obsidian-note/main/20260921091544888.png)
+
+
+---
+
