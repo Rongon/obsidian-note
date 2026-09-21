@@ -13,7 +13,7 @@ https://www.bilibili.com/opus/1204835680577912867
 ![image.png](https://raw.githubusercontent.com/Rongon/obsidian-note/main/20260921083005072.png)
 
 ---
-Open Code Review/frontend-design/UI UX Pro Max/skill creater/super power(工作流)/awosome claude skull/
+Open Code Review/frontend-design/UI UX Pro Max/skill creater/super power(工作流)/awosome claude skull/document-skills/example-skills/
 
 ---
 ## DSH插件
