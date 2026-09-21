@@ -15,6 +15,8 @@ https://www.bilibili.com/opus/1204835680577912867
 ---
 Open Code Review/frontend-design/UI UX Pro Max/skill creater/super power(工作流)/awosome claude skull/document-skills/example-skills/
 
+**Skill Seeker**：这个工具牛了，能自动抓取文档网站、GitHub 仓库、PDF 文件，然后直接转换成 Agent Skills，省去了手写技能说明文档的麻烦。支持多源抓取、代码深度分析、一键打包，特别适合给自己常用的库或框架快速生成 Skills。
+
 ---
 ## DSH插件
 
