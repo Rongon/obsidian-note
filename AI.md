@@ -8,6 +8,8 @@ https://www.bilibili.com/opus/1204835680577912867
 ---
 ## skills
 
+**Skill = 元提示词 + 工作流 + 工具 + 资源 + 触发条件**
+
 ![image.png](https://raw.githubusercontent.com/Rongon/obsidian-note/main/20260921083005072.png)
 
 ---
