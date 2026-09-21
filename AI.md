@@ -20,7 +20,7 @@ Open Code Review/frontend-design/UI UX Pro Max/skill creater/super power(工作�
 ---
 ## DSH插件
 
-dsh-web-ui/dsh-better-sidebar/ModLens(视觉能力)/dsh-routing-suite(增强思维)/whale-girl/dsh-agent-teams/dsh-context(查看上下文)/
+dsh-web-ui/dsh-routing-suite(增强思维)/whale-girl/dsh-agent-teams/dsh-context(查看上下文)/
 
 ---
 ## MCP扩展
