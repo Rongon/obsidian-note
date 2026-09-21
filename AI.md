@@ -13,7 +13,7 @@ https://www.bilibili.com/opus/1204835680577912867
 Open Code Review 是一款通过“确定性规则 + AI Agent”结合的命令行工具，其主要功能是在代码变更提交或全量扫描时提供**行级精准、低误报的代码缺陷审查**。
 
 ---
-frontend-design/UI UX Pro Max/dsh-web-ui/dsh-better-sidebar/ModLens(视觉能力)/
+frontend-design/UI UX Pro Max/
 
 ---
 ## 杂项知识点
@@ -24,3 +24,5 @@ frontend-design/UI UX Pro Max/dsh-web-ui/dsh-better-sidebar/ModLens(视觉能力
 
 ---
 
+dsh插件：
+dsh-web-ui/dsh-better-sidebar/ModLens(视觉能力)/
