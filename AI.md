@@ -8,12 +8,10 @@ https://www.bilibili.com/opus/1204835680577912867
 ---
 ## skills
 
-### [Open Code Review](https://github.com/alibaba/open-code-review?utm_source=gemini) 
-
-Open Code Review 是一款通过“确定性规则 + AI Agent”结合的命令行工具，其主要功能是在代码变更提交或全量扫描时提供**行级精准、低误报的代码缺陷审查**。
+![image.png](https://raw.githubusercontent.com/Rongon/obsidian-note/main/20260921083005072.png)
 
 ---
-frontend-design/UI UX Pro Max/
+Open Code Review/frontend-design/UI UX Pro Max/skill creater/
 
 ---
 ## 杂项知识点
@@ -24,5 +22,5 @@ frontend-design/UI UX Pro Max/
 
 ---
 
-dsh插件：
-dsh-web-ui/dsh-better-sidebar/ModLens(视觉能力)/
+## dsh插件：
+dsh-web-ui/dsh-better-sidebar/ModLens(视觉能力)/dsh-routing-suite(增强思维)/whale-girl/dsh-agent-teams/dsh-context(查看上下文)/
