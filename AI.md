@@ -23,7 +23,7 @@ dsh-web-ui/dsh-better-sidebar/ModLens(视觉能力)/dsh-routing-suite(增强思�
 ---
 ## MCP扩展
 
-firecrawl-mcp/Context7
+firecrawl-mcp(网页内容抓取)/Context7
 
 ---
 ## 杂项知识点
