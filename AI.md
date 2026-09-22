@@ -1,4 +1,4 @@
-# Agent = Model + Harness
+Agent = Model + Harness
 
 ---
 ## Claude Code 斜杠命令大全
