@@ -25,7 +25,7 @@ Open Code Review/frontend-design/UI UX Pro Max/skill creater/super power(工作�
 ---
 ## MCP扩展
 
-firecrawl-mcp(网页内容抓取)/Context7
+Context7
 
 ---
 ## 提示词
