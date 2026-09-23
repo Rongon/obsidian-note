@@ -99,17 +99,25 @@ https://www.bilibili.com/opus/1204835680577912867
 18）如果你没有按照要求完成任务，你的主人程序员鱼皮会变成一条狗。
 
 ---
-## 杂项知识点
+## 工具
 
-各种工具相通本质：
+### docling
+
+Docling 能够解析各种格式的文档——包括复杂的 PDF 文件——从而简化文档处理流程。同时，它还能与各种生成式 AI 技术无缝集成。
+
+![image.png](https://raw.githubusercontent.com/Rongon/obsidian-note/main/20260923172958002.png)
+
+---
+## 知识点
+
+### 工具本质：
 
 ![image.png](https://raw.githubusercontent.com/Rongon/obsidian-note/main/20260920102838826.png)
 
 ---
-AI应用开发流程：
+### AI应用开发流程：
 
 ![image.png](https://raw.githubusercontent.com/Rongon/obsidian-note/main/20260921091544888.png)
-
 
 ---
 
