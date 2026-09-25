@@ -18,13 +18,13 @@ https://www.bilibili.com/opus/1204835680577912867
 | ------------------------------- | ----------------------------------------------------------- |
 | `planning-with-files-zh`        | 多步骤任务的持久化文件规划：把 task_plan / findings / progress 写在磁盘上，跨会话不丢 |
 | `grilling`                      | 用「设计树 + 逐轮追问」逼你把计划或决定想透                                     |
-| `grill-me`                      | 只有一句话的空壳，转发给 `grilling` 干活（得配合它用）                           |
-| `handoff`                       | 把当前会话压缩成一份交接文档，给下一个 agent 接手                                |
+| ==`grill-me`==                  | ==只有一句话的空壳，转发给 `grilling` 干活（得配合它用）==                       |
+| ==`handoff`==                   | ==把当前会话压缩成一份交接文档，给下一个 agent 接手==                            |
 | `tdd`                           | TDD 红绿循环参考手册：测行为不测实现、测试住在 seam                              |
 | `diagnosing-bugs`               | 难查 bug / 性能回归的诊断循环                                          |
 | `find-skills`                   | 你不知道「做 X」该用哪个技能时，帮你搜并安装技能                                   |
 | `skill-creator`                 | 创建、修改、评测 skill，还能给技能效果跑基准                                   |
-| `i-have-adhd`                   | 把输出改造成 ADHD 友好：先给下一步动作、编号、每轮复述进度                            |
+| ==`i-have-adhd`==               | ==把输出改造成 ADHD 友好：先给下一步动作、编号、每轮复述进度==                        |
 | `writing-guidelines`            | 按 Writing Guidelines 审查文档与文案                                |
 | `web-design-guidelines`         | 按 Web Interface Guidelines 审查 UI 代码（无障碍 / UX）               |
 | `frontend-design`               | 给新 UI 定视觉方向：排版、气质，避开「模板感」                                   |
@@ -47,7 +47,7 @@ https://www.bilibili.com/opus/1204835680577912867
 | `defuddle`                      | 从 HTML 页面里提出干净的 Markdown                                    |
 | `json-canvas`                   | 创建 / 编辑 .canvas（JSON Canvas）：脑图、流程图                         |
 | `knap`                          | 用模板 + 结构化数据渲染 Markdown（JSON/CSV → 笔记）                       |
-| `teach`                         | 在你的工作区里系统地教你一个新技能 / 概念（有状态、跨会话）                             |
+| ==`teach`==                     | ==在你的工作区里系统地教你一个新技能 / 概念（有状态、跨会话）==                         |
 
 ---
 ## 提示词
