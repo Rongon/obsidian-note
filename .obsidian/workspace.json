@@ -78,7 +78,7 @@
             }
           }
         ],
-        "currentTab": 4
+        "currentTab": 2
       }
     ],
     "direction": "vertical"
@@ -142,7 +142,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "PLUGINS.md",
+                "file": "AI.md",
                 "followCursor": false,
                 "showSearch": true,
                 "searchQuery": ""
@@ -257,10 +257,10 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "f4b89c25065c7b41",
+  "active": "d671f6fe005f4767",
   "lastOpenFiles": [
-    "SKILLS.md",
     "PLUGINS.md",
+    "SKILLS.md",
     "AI.md",
     "Interview2026.md",
     "20260923172958002.png",

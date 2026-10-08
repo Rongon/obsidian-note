@@ -1,11 +1,12 @@
 # 已安装技能清单
 
-本文件由 DSH Web 端维护。
+本文件由 DSH 维护（Web 端 / 桌面端共用同一个技能目录）。
 
 - 本文件位置：`D:\FrontEnd\GitMd\SKILLS.md`
 - 技能目录：`C:\Users\13035\.agents\skills\`（全局技能根，DSH rank 500）
 - 维护约定：每次新增或删除技能后，同步更新本文件
 - 标注「只有你能调用」的技能，其 frontmatter 写了 `disable-model-invocation: true`，不会出现在模型的技能目录里，只能由用户主动调用
+- 最后核对：桌面端会话，磁盘 39 个目录
 
 ## 技能列表
 
@@ -30,7 +31,7 @@
 | `opencli-autofix` | opencli 命令挂掉时，自动修 adapter 并提 issue |
 | `opencli-browser` | 驱动真实 Chrome 窗口：看页面、填表、走登录流程、抽数据 |
 | `opencli-browser-sitemap` | 带着站点 sitemap 上下文驱动网站，避免盲导航 |
-| `opencli-sitemap-author` | 制作 / 维护 OpenCLI 的站点 sitemap |
+| `opencli-sitemap-author` | 制作 / 维护 OpenCLI 的站点 sitemap（**在磁盘上但当前对模型不可见，原因未查明**） |
 | `opencli-usage` | OpenCLI 的总入口地图：有哪些能力、怎么找 adapter |
 | `planning-with-files-zh` | 多步骤任务的持久化文件规划：task_plan / findings / progress 落盘，跨会话不丢 |
 | `prototype` | 做个一次性原型来回答一个设计问题（状态模型、逻辑、UI 长什么样） |
@@ -38,6 +39,7 @@
 | `resolving-merge-conflicts` | 解决进行中的 git merge / rebase 冲突 |
 | `setup-pre-commit` | 给仓库配 Husky + lint-staged(Prettier) + 类型检查 + 测试 |
 | `skill-creator` | 创建、修改、评测 skill，还能给技能效果跑基准 |
+| `tabbit` | 通过 Tabbit 自带的 CLI 做浏览器导航、检查、交互与视觉验证 |
 | `tdd` | TDD 红绿循环参考手册：测行为不测实现、测试住在 seam |
 | `teach` | 在你的工作区里系统地教你一个新技能 / 概念（有状态、跨会话）（只有你能调用） |
 | `ui-ux-pro-max` | UI/UX 设计智库：79 种风格、192 套配色、字体搭配、UX 准则 |
@@ -50,4 +52,14 @@
 | `web-design-guidelines` | 按 Web Interface Guidelines 审查 UI 代码（无障碍 / UX） |
 | `writing-guidelines` | 按 Writing Guidelines 审查文档与文案 |
 
-共 38 个技能。
+共 39 个技能。
+
+## DSH 自带技能（不在上面那个目录里，桌面端额外提供）
+
+| 技能 | 一句话功能 |
+| --- | --- |
+| `diagnose-windows-sandbox-acl` | Windows 上遇到沙箱访问被拒时，检查并修复 ACL |
+| `genui` | dsh-ui 交互组件的语法与字段参考 |
+| `office-docx` | 创建 / 读取 / 编辑 Word 文档（.docx） |
+| `office-pptx` | 创建 / 读取 / 编辑 PowerPoint（.pptx） |
+| `office-xlsx` | 读取 / 创建 / 修改 Excel 工作簿（.xlsx） |
