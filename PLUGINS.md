@@ -12,7 +12,6 @@
 | ----------------------------------------- | ------------------------------------------------------------ |
 | `@changfenhuang/dsh-genui`                | 生成式 UI：回答里直接渲染图表 / 表格 / 卡片 / 表单等结构化组件                        |
 | `@laoyuehanni/dsh-git-worktree`           | 分支可见性 + git worktree 隔离（每个会话一个独立工作目录）                        |
-| `@linxin666/dsh-client-ui-git-graph`      | 空会话的 git 分支选择器 + 提交图                                         |
 | `@linxin666/dsh-client-ui-skill-explorer` | DSH 技能中心面板：按来源浏览已加载技能、启停、增删                                  |
 | `@liustack/modlens`                       | 给没有视觉能力的模型接一个视觉桥（读图）                                         |
 | `@liustack/modsearch`                     | 网页搜索 / 页面正文提取 / X（推特）搜索 / 读图                                 |
