@@ -91,8 +91,7 @@
               "title": "MCP"
             }
           }
-        ],
-        "currentTab": 2
+        ]
       }
     ],
     "direction": "vertical"
@@ -156,7 +155,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "AI.md",
+                "file": "Interview2026.md",
                 "followCursor": false,
                 "showSearch": true,
                 "searchQuery": ""
@@ -271,12 +270,12 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "d671f6fe005f4767",
+  "active": "876524904878dd48",
   "lastOpenFiles": [
-    "MCP.md",
-    "PLUGINS.md",
     "SKILLS.md",
     "AI.md",
+    "MCP.md",
+    "PLUGINS.md",
     "Interview2026.md",
     "20260923172958002.png",
     "20260921091544888.png",
