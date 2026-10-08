@@ -49,8 +49,7 @@
               "title": "AI"
             }
           }
-        ],
-        "currentTab": 2
+        ]
       }
     ],
     "direction": "vertical"
@@ -114,7 +113,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "AI.md",
+                "file": "Interview2026.md",
                 "followCursor": false,
                 "showSearch": true,
                 "searchQuery": ""
@@ -230,12 +229,12 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "d671f6fe005f4767",
+  "active": "876524904878dd48",
   "lastOpenFiles": [
+    "AI.md",
     "SKILLS.md",
     "20260923172958002.png",
     "Interview2026.md",
-    "AI.md",
     "20260921091544888.png",
     "20260921083005072.png",
     "20260920102838826.png",
