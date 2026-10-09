@@ -97,12 +97,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Program2026.md",
+                "file": "Vite.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Program2026"
+              "title": "Vite"
             }
           }
         ],
@@ -170,7 +170,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Program2026.md",
+                "file": "Vite.md",
                 "followCursor": false,
                 "showSearch": true,
                 "searchQuery": ""
@@ -179,7 +179,8 @@
               "title": "大纲"
             }
           }
-        ]
+        ],
+        "currentTab": 3
       }
     ],
     "direction": "horizontal",
@@ -285,11 +286,11 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "cfcf2e473b8f3a0a",
+  "active": "772ec373c92781d1",
   "lastOpenFiles": [
+    "Program2026.md",
     "MCP.md",
     "项目知识点重难点讲解.md",
-    "Program2026.md",
     "Interview2026.md",
     "SKILLS.md",
     "AI.md",
