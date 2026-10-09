@@ -22,20 +22,6 @@
             }
           },
           {
-            "id": "49ee7718183921d5",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "ComputerNetwork.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "ComputerNetwork"
-            }
-          },
-          {
             "id": "d671f6fe005f4767",
             "type": "leaf",
             "state": {
@@ -92,7 +78,21 @@
             }
           },
           {
-            "id": "cfcf2e473b8f3a0a",
+            "id": "e20e332dd2faad20",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Program2026.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Program2026"
+            }
+          },
+          {
+            "id": "2755008a5376b609",
             "type": "leaf",
             "state": {
               "type": "markdown",
@@ -286,15 +286,17 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "772ec373c92781d1",
+  "active": "2755008a5376b609",
   "lastOpenFiles": [
     "Program2026.md",
+    "Vite.md",
     "MCP.md",
-    "项目知识点重难点讲解.md",
-    "Interview2026.md",
+    "PLUGINS.md",
     "SKILLS.md",
     "AI.md",
-    "PLUGINS.md",
+    "Interview2026.md",
+    "ComputerNetwork.md",
+    "项目知识点重难点讲解.md",
     "20260923172958002.png",
     "20260921091544888.png",
     "20260921083005072.png",
@@ -302,7 +304,6 @@
     "20260920091923132.png",
     "20260920091846984.png",
     "20260920090945261.png",
-    "ComputerNetwork.md",
     "Vue3.md",
     "React文档笔记.md",
     "面试.md",
