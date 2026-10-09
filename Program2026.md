@@ -10,7 +10,7 @@
 
 1. 使用 WebP 转换、响应式图片、路由级代码分割与组件按需引入等手段优化站点首屏性能，首屏 LCP 从 X 降至 Y，首屏 JS 体积从 X 降至 Y。 ⚠️ **X / Y 是占位符，必须换成实测数字。**
 2. 使用乐观更新实现评论即时上屏与失败回滚，配合请求幂等与防重复提交，保证评论区在网络异常与连续点击下的状态一致。
-3. Markdown 内容管线：构建时解析与代码高亮（markdown-it + Shiki 只跑在构建期，客户端零额外 JS）、目录锚点与滚动定位。
+3. 使用 Vite 插件在构建时把 Markdown 编译为 HTML 与元数据（markdown-it + Shiki 只跑在构建期，客户端零额外 JS），并自动生成目录锚点。
 4. 使用 URL query 作为筛选状态的唯一数据源，实现分页、分类、标签与关键词的组合筛选，保证刷新与浏览器前进后退均可还原视图。
 5. 构建并部署优化前 / 优化后两个版本，站内汇总各优化项的首屏指标、包体积与请求数对比，支持面试现场直接对照验证。
 
@@ -123,6 +123,88 @@ Markdown 文件本身不是网页，必须先经过「解析」变成 HTML。
 - **构建时解析**：执行 `pnpm build` 时，Node 里就把 `.md` 转成 HTML 字符串写进产物 → 用户拿到就是 HTML，浏览器不做任何解析。
 
 **实现方式**：写一个 Vite 插件（或用一个现成的），在编译每个 `.md` 文件时，把它变成「HTML + 标题 + 日期」的 JS 模块。
+
+##### 1.1 现成的 Vite 插件有什么（官方 / 社区 / 个人）
+
+| 类别 | 代表 | 说明 |
+|---|---|---|
+| Vite 官方 | `@vitejs/plugin-vue`、`@vitejs/plugin-react`、`@vitejs/plugin-vue-jsx`、`@vitejs/plugin-legacy` | 只有「框架支持」这一类。`plugin-legacy` 就是官方的 |
+| 社区成熟（Markdown 方向） | `unplugin-vue-markdown`（前身 `vite-plugin-vue-markdown`，更早是 antfu 的 `vite-plugin-md`） | 最主流，但它做的是「把 `.md` 变成一个 Vue 组件」，通常配 `vite-plugin-pages` 做文件路由——属于文档站全家桶 |
+| 社区成熟（另两个方向） | `@mdx-js/rollup`（MDX）、`vite-plugin-markdown`（较老，导出 HTML 字符串） | MDX 允许在 Markdown 里写 JSX；`vite-plugin-markdown` 基本没人用了 |
+| 个人自定义 | 自己写 | 就是一个普通对象 + 几个钩子 |
+
+**关键事实：Vite 官方没有 Markdown 插件。**
+
+**为什么本项目自己写（约 20 行）**：
+
+1. `unplugin-vue-markdown` 的目标是「把 md 当 Vue 组件用」，我们要的是「把 md 编译成 HTML + 元数据」，它的能力对我们是多余的，而且它封装深、概念多，反而讲不清。
+2. 自己写的插件只有 3 个概念，能完整讲下来——这才是简历上写「构建时解析」的底气。
+3. 面试官问「这条管线是你搭的吗」，可以答：「Vite 插件是我自己写的，核心就是一个 `transform` 钩子」。
+
+##### 1.2 自定义 Vite 插件只有 3 个概念
+
+**概念 1 · 插件就是一个普通对象**，必备要素只有一个：必须有 `name`（报错时靠它定位），其余全是钩子。
+Vite 插件 = **Rollup 插件接口 + Vite 自己的扩展钩子**。所以会写 Vite 插件，等于会写 Rollup 插件——这句话面试里可以主动说。
+
+**概念 2 · 钩子（hook）就是「在某个时机被 Vite 调用一次的函数」**。不用全学，常用的就四五个。
+
+**概念 3 · `transform` 的本质：把内容换成另一段内容还回去**。
+
+```js
+// plugins/markdown.js —— 插件的本体
+import MarkdownIt from 'markdown-it'
+
+const md = new MarkdownIt()
+
+export default function markdownPlugin() {
+  return {
+    name: 'my-markdown',      // 必填：报错时靠它定位
+    enforce: 'pre',           // 抢在 Vite 核心插件之前处理
+    transform(src, id) {
+      if (!id.endsWith('.md')) return    // 不是 .md 就放过
+      const html = md.render(src)        // markdown-it 在 Node 里跑
+      return {
+        code: `export default ${JSON.stringify(html)}`,
+        map: null,
+      }
+    },
+  }
+}
+```
+
+**常用钩子**：
+
+| 钩子 | 什么时候跑 | 典型用途 |
+|---|---|---|
+| `name` | （不是钩子，但必填） | 标识插件，报错时定位 |
+| `transform(src, id)` | 模块内容拿到后、编译前 | 改内容：把 `.md` 换成 JS ← **我们用这个** |
+| `resolveId(id)` | 解析 import 路径时 | 告诉 Vite「这个路径我来处理」 |
+| `load(id)` | 要读文件内容时 | 自己返回内容，不走默认读盘 |
+| `configureServer(server)` | 开发服务器启动时 | 加中间件、改开发行为 |
+| `transformIndexHtml(html)` | 处理 index.html 时 | 注入标签、改 HTML |
+| `closeBundle()` | 打包结束时 | 收尾、生成统计文件 |
+
+**三句话读懂上面那段代码**：
+
+1. Vite 读到 `hello.md` 的内容，交给 `transform`；
+2. 我们把它换成 `export default 一段 HTML 字符串` 这样的 **JS 代码**；
+3. 于是 `import.meta.glob('../posts/*.md')` 拿到的不再是文本，而是**已经编译好的 HTML**。
+
+`.md` 本来不是 JS，是插件**把它变成了 JS 模块**——这就是「让 Vite 支持一种新文件类型」的通用套路。
+
+**`enforce: 'pre'` 为什么必要**：要在 Vite 自己的解析之前把 `.md` 截下来，否则它会当成 JS 去解析然后报错。这正是 `enforce` 那一段的真实用途。
+`apply` 我们这里用不上（只在想让某段逻辑只在打包时跑时才写 `apply: 'build'`）。
+
+**一个必须知道的对照：`?raw`**
+
+很多人这样读 Markdown：`import raw from './a.md?raw'`。`?raw` 是 Vite 内置的，作用是**「不要编译，把文件原始文本给我」**。
+区别：它给你的是 **Markdown 原文**，你还得在浏览器里解析 → **那是运行时渲染，又回到慢的那条路**。我们自写插件给的是**已编译的 HTML** → 构建时渲染。
+**所以看到 `?raw` 要立刻反应过来：它是「原样给我」，不是「帮我编译」。**
+
+**新版 Vite 还提供了带 filter 的对象写法**，能更精确地只匹配 `.md`：
+`transform: { filter: { id: 正则 }, handler(src, id) { ... } }`
+
+**权威出处**：Vite 官方 Plugin API `https://vite.dev/guide/api-plugin`（里面就有 "Transforming Custom File Types" 这个例子）；社区插件见 `https://github.com/unplugin/unplugin-vue-markdown`。
 
 #### 难点 2：`import.meta.glob` 是什么
 
