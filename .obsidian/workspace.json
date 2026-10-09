@@ -106,7 +106,7 @@
             }
           }
         ],
-        "currentTab": 6
+        "currentTab": 5
       }
     ],
     "direction": "vertical"
@@ -170,7 +170,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Vite.md",
+                "file": "Program2026.md",
                 "followCursor": false,
                 "showSearch": true,
                 "searchQuery": ""
@@ -286,10 +286,10 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "2755008a5376b609",
+  "active": "e20e332dd2faad20",
   "lastOpenFiles": [
-    "Program2026.md",
     "Vite.md",
+    "Program2026.md",
     "MCP.md",
     "PLUGINS.md",
     "SKILLS.md",
