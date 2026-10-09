@@ -330,7 +330,202 @@ A：「前者是构建时就确定并打包进来，后者是运行时请求。�
 
 ## 重难点 4 · 列表页复合筛选与 URL 状态同步
 
-*待写入*
+### 一、它解决的问题（场景）
+
+博客的列表页要支持四件事：**分类**、**标签**、**关键词搜索**、**分页**，用户可以任意组合它们。
+
+**普通写法**是把这些筛选状态放在组件里：
+
+```js
+const category = ref('all')
+const keyword = ref('')
+const page = ref(1)
+```
+
+点一下筛选就改 `ref` 再发请求。看起来完全没问题，但它会带来三个用户能亲眼看到的问题：
+
+1. **刷新就没了**：你筛选到「Vue 分类、第 3 页」，按一下 F5，全部回到默认状态。
+2. **链接发不出去**：想把「Vue 分类第 3 页」发给同事或面试官，地址栏永远是 `/posts`，对方打开的只是第一页。
+3. **浏览器后退是错乱的**：点后退不会回到上一次的筛选结果，而是直接离开列表页——因为筛选这件事**从来没有进过历史记录**。
+
+这三个问题的根是同一个：**筛选状态只活在内存里，没有落到 URL 上。**
+
+**正确写法**：把筛选状态全部写进 URL query，例如
+
+```
+/posts?category=vue&tag=performance&q=白屏&page=3
+```
+
+用户每点一次筛选，本质上就是**改了一次 URL**；页面显示什么，完全由这一串参数决定。这就是「单一数据源」。
+
+### 二、技术难点到底在哪
+
+#### 难点 1：URL 是唯一真相源（一切的根）
+
+**最容易犯的错**是「半迁移」——URL 里有一份 query，组件里还留着一份 `ref`。两份状态必须手动同步，早晚不一致：用户点后退，URL 变回去了，但 `ref` 没变，页面显示的还是旧筛选。
+
+**正确做法**：组件里**不允许再存一份**，一切从 `route.query` 派生。
+
+```ts
+const route = useRoute()
+
+const filters = computed(() => ({
+  category: (route.query.category as string) ?? 'all',
+  tag: (route.query.tag as string) ?? '',
+  q: (route.query.q as string) ?? '',
+  page: Number(route.query.page ?? 1) || 1,
+}))
+
+// 数据请求由 URL 驱动，而不是由组件里的 ref 驱动
+watch(() => route.query, loadPosts, { immediate: true })
+```
+
+写入也只有一个入口：改 URL。**UI 是 URL 的纯函数。**
+
+三个细节：
+
+- **要 `watch` 的是 `() => route.query`，不是 `route` 整体。** 监听整个 `route` 会在 hash、params 变化时也触发；监听 `route.query` 才只在筛选真的变了时触发。
+- **必须用 `watch` 感知变化，不能只在 `onMounted` 里请求一次。** 同一个路由换 query 时，Vue Router 会**复用组件实例**，不会重新执行 `setup`——只在 `onMounted` 里拉数据的写法，切筛选时根本不会重新请求。
+- `immediate: true` 让首屏进入时也拉一次，不用再单独写一次初始请求。
+
+**面试里可以这么说**：「我没有在组件里存任何筛选状态，`route.query` 就是唯一的状态。组件里只有 `computed` 从它派生，只有 `router.push` 改它。这样『不一致』这个 bug 在结构上就不可能发生。」
+
+#### 难点 2：`router.push` 不会帮你合并 query
+
+**反直觉但必须记住**：`router.push({ query: { page: 2 } })` **不会**把现有的 query 合并进来，其他参数会被整个丢掉。
+
+也就是说，如果当前地址是 `/posts?category=vue`，你想翻到第 2 页而只写了 `{ query: { page: 2 } }`，结果会是 `/posts?page=2`——**分类被清空了**。
+
+所以每次导航都要基于当前 query 构造完整的新 query：
+
+```ts
+router.push({ query: { ...route.query, page: 2 } })
+```
+
+这不是我瞎说：vue-router 官方仓库里就有人因为这个行为，被迫写了一个 `useQueryManager` 来统一管理（issue #2358），可见这是真实会咬人的坑。
+
+**更好的做法是「全站只留一个出口」**：封装 `updateQuery(patch)`，任何地方改筛选都走它，不在各个组件里各写一遍 `router.push`。
+
+```ts
+function updateQuery(patch: Record<string, string | number | undefined>) {
+  const next: Record<string, any> = { ...route.query, ...patch }
+
+  // 1. 空值不进 URL，保持地址栏干净
+  Object.keys(next).forEach(k => {
+    if (next[k] === '' || next[k] === undefined || next[k] === null) delete next[k]
+  })
+
+  // 2. 改的是筛选条件（不是翻页）→ 分页必须回到第 1 页
+  if (!('page' in patch)) delete next.page
+
+  router.push({ query: next })
+}
+```
+
+#### 难点 3：`push` 还是 `replace` —— 别把历史记录弄脏
+
+浏览器的历史记录是留给「用户可能想回退的那一步」的。
+
+搜索框如果每敲一个字就 `push`，输入「性能优化」四个字就会留下四条历史记录，用户想退出列表页要按十几次后退——体验直接崩。
+
+所以规则要分开：
+
+| 操作 | 用哪个 | 为什么 |
+|---|---|---|
+| 点分类 / 点标签 | `push` | 一次明确的操作，用户可能想退回到上一个分类 |
+| 翻页 | `push` | 同上，翻页也是一步独立操作 |
+| 搜索框输入 | `replace` + 防抖 | 连续输入的中间态，每个字都记一条会让后退按钮变得没用 |
+
+`router.replace({ query })` 和 `router.push({ query, replace: true })` 是等价的，官方文档明确写了这一点。
+
+#### 难点 4：改筛选条件必须重置分页（真实边界 bug）
+
+这是最容易被忽略、但一定会发生的边界 bug。
+
+**场景**：你在第 5 页，点了一个只有 2 页的分类。请求发出去的是 `page=5` 加上新分类，后端返回空数组，页面显示「暂无文章」——但明明有文章。用户的第一反应是「这个网站坏了」。
+
+**规则**：**筛选条件变化时必须把 `page` 重置为 1**；反过来，**翻页时不能重置其他筛选条件**。
+
+这两条是同一件事的两面，都要收在 `updateQuery()` 里靠「这次是谁变了」来判断，而不是散落到各个组件里各写一遍。
+
+#### 难点 5：竞态——先点的请求后回来（最硬的一条）
+
+**场景**：用户快速点「Vue」再点「React」。
+
+- 第一个请求（Vue）发出去了，耗时 800ms
+- 第二个请求（React）也发出去了，耗时 100ms，先回来，渲染 React 列表 ✅
+- **800ms 后，Vue 的响应才回来，把 React 的结果覆盖成了 Vue** ❌
+
+此时地址栏明明是 `category=react`，页面上却是 Vue 的文章——**URL 和数据不一致了**。而且这个问题在本地几乎不会出现（接口都是几毫秒），一上线、或面试官在慢网络下点两次，它就冒出来了。这是「面试现场演示翻车」的高危项。
+
+两种解法，建议一起用：
+
+1. **AbortController 真取消**：发新请求前先把上一个掐掉，axios 通过 `signal` 支持。
+2. **自增序号兜底**：每次请求记住自己的序号，回来时只有「我还是最新那次」才允许写结果。
+
+```ts
+let controller: AbortController | null = null
+let seq = 0
+
+async function loadPosts() {
+  controller?.abort()                 // 掐掉上一次还没回来的请求
+  controller = new AbortController()
+
+  const my = ++seq
+  const res = await axios.get('/api/posts', {
+    params: filters.value,
+    signal: controller.signal,
+  })
+  if (my !== seq) return              // 不是最新的一次，结果直接丢弃
+  posts.value = res.data
+}
+```
+
+被 abort 的请求会抛 `CanceledError`，要单独 catch 掉，别当成网络错误弹提示。
+
+> 这条正好接上 Vue 笔记里的坑：「watch 里发请求不做 `onWatcherCleanup`」。Vue 3.5 里可以直接用：
+>
+> ```ts
+> watch(() => route.query, async (q, _, onCleanup) => {
+>   const controller = new AbortController()
+>   onCleanup(() => controller.abort())   // 下次触发时先取消上一次
+>   // ...
+> }, { immediate: true })
+> ```
+
+**面试里的说法**：「这里有个竞态：快速切换筛选条件时，先发的请求可能后返回，把新结果覆盖掉，导致 URL 和页面数据不一致。我用两条措施——请求序号用来丢弃过期响应，`AbortController` 用来真正取消上一个请求。这是 URL 驱动状态下必然会遇到的并发问题。」
+
+#### 难点 6：默认值与非法参数
+
+三个细节，都很实用。
+
+**（1）默认值不进 URL。** 分类为「全部」、页码为 1 时，不要把它们写进地址栏，否则 URL 会变成 `/posts?category=&tag=&q=&page=1` 这种又长又丑的东西。干净的目标就是 `/posts`。判断基准是「这个值是不是默认值」，是就不放进 query。
+
+**（2）非法参数要防御。** 访客可以直接手改地址栏：`?page=abc` 会算出 `NaN`，`?page=-1`、`?page=999` 都超出范围。做法是读到非法值时回退到默认值，并用 `router.replace` 把地址栏纠正回来，而不是把错误状态留在 URL 里。
+
+**（3）顺带一个类型坑。** `route.query.xxx` 的类型是 `string | null | (string | null)[]`（因为 `?tag=a&tag=b` 是合法的）。只做单选时，读取要处理掉数组的情况，别在运行时意外拿到数组。
+
+### 三、面试官会怎么问，你怎么答
+
+**Q1：「筛选状态为什么不直接放组件里？」**
+A：「三个理由。一是刷新、直接访问、分享链接都能还原视图，这是『链接能发给别人』的前提；二是浏览器前进后退天然正确，不用自己维护历史栈；三是列表页拆成搜索栏、筛选栏、列表三个组件之后，URL 就是天然的状态共享，不用层层传 props，也不用再往 Pinia 里存一份。代价是 URL 会变长、读出来全是字符串要手动转换，这个可以接受。」
+
+**Q2：「怎么保证 URL 和页面显示永远一致？」**
+A：「靠一条规则：单向数据流。URL 是唯一的输入，页面是它的输出。组件里不存筛选值的 ref，全部用 `computed` 从 `route.query` 派生；用户的任何操作都只调 `updateQuery()`，只改 URL。这样『URL 变了页面没变』和『页面变了 URL 没变』都不可能发生——因为它们本来就是同一份数据。」
+
+**Q3：「为什么搜索用 replace、分类用 push？」**
+A：「历史记录是留给『用户可能想回退的一步』的。分类、标签、翻页都是明确的一次操作，值得一条记录；搜索是连续输入的中间态，每敲一个字都记一条的话，用户要按十几次后退才能离开列表页。所以搜索配合防抖用 `replace`，其他用 `push`。」
+
+**Q4：「用户快速连点两个分类，先点的请求后回来怎么办？」**
+A：「这是竞态，会出现『地址栏是 React、列表是 Vue』。我用两条措施：发新请求之前用 `AbortController` 取消上一个（axios 支持 `signal`），同时给每次请求编号，回来时只有序号还是最新的那次才允许把结果写进列表。这样即使取消没能及时生效，旧结果也会被丢弃。另外被 abort 的请求会抛 `CanceledError`，得单独 catch，不能当成网络错误弹提示。」
+
+**Q5：「用户在列表第 5 页，点了一个只有 2 页的分类会怎样？」**
+A：「会出现『暂无文章』的假空态。所以规则是：筛选条件变化时把 `page` 重置为 1；反过来翻页时保留其他条件。这两条都收在 `updateQuery()` 里，靠判断这次补丁里有没有筛选项来决定。另外手改地址栏传进来的非法页码会回退到默认值，并用 `replace` 把 URL 纠正回来。」
+
+**Q6：「标签要多选的话，URL 里怎么放数组？」**
+A：「`?tag=vue&tag=vite`，`route.query.tag` 读出来可能是 `string`、也可能是 `string[]`，类型是 `string | string[] | null`，要先归一化成数组。不过这一期我们只做单选，先把范围控制住，多选留作以后的扩展点。」
+
+> 参考出处：Vue Router 官方 Programmatic Navigation（`push` / `replace` / `replace: true` 的等价关系）；vuejs/router issue #2358（`route.query` 异步更新、query 不自动合并的真实讨论）。
 
 ---
 
