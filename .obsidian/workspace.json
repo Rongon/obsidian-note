@@ -106,7 +106,7 @@
             }
           }
         ],
-        "currentTab": 2
+        "currentTab": 5
       }
     ],
     "direction": "vertical"
@@ -170,7 +170,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "SKILLS.md",
+                "file": "Program2026.md",
                 "followCursor": false,
                 "showSearch": true,
                 "searchQuery": ""
@@ -286,13 +286,13 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "7bcd0171192c1f4a",
+  "active": "e20e332dd2faad20",
   "lastOpenFiles": [
+    "SKILLS.md",
     "Program2026.md",
     "Vite.md",
     "MCP.md",
     "PLUGINS.md",
-    "SKILLS.md",
     "AI.md",
     "Interview2026.md",
     "ComputerNetwork.md",
