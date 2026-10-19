@@ -92,7 +92,7 @@
             }
           }
         ],
-        "currentTab": 1
+        "currentTab": 5
       }
     ],
     "direction": "vertical"
@@ -156,7 +156,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "AI.md",
+                "file": "Program2026.md",
                 "followCursor": false,
                 "showSearch": true,
                 "searchQuery": ""
@@ -272,8 +272,9 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "d671f6fe005f4767",
+  "active": "e20e332dd2faad20",
   "lastOpenFiles": [
+    "AI.md",
     "Program2026.md~RF51d15ab.TMP",
     "Program2026.md",
     "Program2026.md~RF6f1c8ab.TMP",
@@ -281,7 +282,6 @@
     "Vite.md",
     "MCP.md",
     "PLUGINS.md",
-    "AI.md",
     "Interview2026.md",
     "ComputerNetwork.md",
     "项目知识点重难点讲解.md",
