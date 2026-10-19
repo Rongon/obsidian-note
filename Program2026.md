@@ -1567,12 +1567,96 @@ Lighthouse 的网络明细说得很清楚：
 
 ---
 
-## 优化项 8 · Supabase 移出首屏包（待做）
+## 优化项 8 · 登录态移出首屏包（tag v8-asyncauth）
 
-实现方案与取舍见「决策记录 2」。实测数字落在本节，做完补。
+### 做了什么
 
+四处改动，缺一处都不成立：
 
+1. **`src/main.ts` 删掉 `void useAuthStore(pinia).init()`。**这句话的意思是「不管当前页面用不用得上登录态，启动时都要问一次服务器」。首页显然用不上。
+2. **登录 UI 拆成 `src/components/AuthMenu.vue`。**顶栏是全站唯一「渲染前必须先知道用户是谁」的地方，把这段 UI 单独拿走，Supabase 客户端就跟着它走了。
+3. **`DefaultLayout.vue` 用 `defineAsyncComponent` 装它。**于是 `auth` chunk 不再被入口静态依赖。
+4. **新增 `src/lib/authStorage.ts` 和 `hasStoredSession()`：先同步看一眼 localStorage。**
 
+### 第 4 步才是关键
 
+只做前 3 步，首页依然会把那 59 KiB 拉下来——只是从「阻塞渲染」变成「渲染完再拉」。这叫**挪后加载，不叫省字节**。
 
+真正的省法是不加载：没有本地 session 的访客（几乎所有人，包括 Lighthouse 的匿名访问）连 `AuthMenu` 都不挂载，那个 chunk 一次都不会被请求。
 
+```ts
+const AUTH_STORAGE_KEY = 'p2026:auth' // 和 createClient 的 storageKey 共用同一个常量
+
+export function hasStoredSession(): boolean {
+  try {
+    return Boolean(localStorage.getItem(AUTH_STORAGE_KEY))
+  } catch {
+    return false // 无痕模式下访问 localStorage 会抛异常
+  }
+}
+```
+
+它只能回答「有没有」，不能回答「还有效吗」——有效性必须问 SDK。所以它只用来决定**要不要把组件装上**，不用来决定「显示登录还是显示昵称」。这个区分很重要：过期判断交给 SDK，装不装的判断留在同步世界里。
+
+登录 / 注册成功都是以「跳转」收尾的，所以 `DefaultLayout` 里 `watch(() => route.fullPath, ...)` 会重新看一眼本地 session，否则登录回来顶栏会一直卡在「登录」两个字上。
+
+### 数字
+
+| 指标 | 优化项 7 后 | 优化项 8 后 |
+| --- | --- | --- |
+| 首屏脚本 | 192.9 KiB | **136.9 KiB（−56.0，−29%）** |
+| 首屏总传输 | 1,142.5 KiB | 1,086.7 KiB（−55.8） |
+| 图片 / 样式 / 字体 | 901.1 / 14.8 / 32.5 KiB | 901.1 / 14.8 / 32.5 KiB |
+| 请求数 | 16 | 16 |
+| Performance | 94（95 / 89 / 94） | 97（93 / 98 / 97） |
+| TBT | 92 ms | 52 ms |
+| FCP / LCP | 470 / 750 ms | 390 / 710 ms |
+| CLS | 0.000223 | 0.000223 |
+
+三次原始报告都在 `perf/step8-asyncauth*.json`。
+
+**确定性结论只有一个：脚本确定少了 56.0 KiB，那个 59.3 KiB 的 Supabase chunk 在线上首页的网络面板里彻底消失了。**已逐条核对过 `perf/step8-asyncauth-run2.json` 的 16 个请求，里面没有任何 `auth-*`。
+
+TBT 92 → 52 ms 可以算因果：TBT 主要来自 JS 的解析和主线程执行，脚本少 29% 时它跟着降，方向对得上。
+
+FCP / LCP 的改善**不算成绩**——这两个数在优化项 7 的三次里是 470 / 1046 / 470，本来就有一倍波动，落在噪声里的提升不能写进简历。
+
+### 一个没预料到的发现：拆包会重新洗牌共享 chunk
+
+预估是 −80.3 KiB（整个 auth chunk 的大小），实测只有 −56.0。差值不是没做到，是**省下的和回来的不是同一份东西**：
+
+- `auth` chunk 从 284.8 kB 降到 224.0 kB（−60.7 kB）
+- 但凭空冒出一个 `use-global-config` chunk（61.0 kB / gzip 23.5 kB），并且被 `index.html` 的 `modulepreload` 拉住
+
+原因是 `ElMessage` 原本从 `DefaultLayout`（同步、在入口包里）导入，现在从 `AuthMenu`（异步）导入。element-plus 那个共享配置模块因此被 Rollup 重新判定了归属：以前它和 Supabase 挤在同一个共享 chunk 里，现在被单独切出来，而入口依然需要它。
+
+净账：`−82.19`（auth 的 gzip）`+23.50`（新 chunk）`+约 1.7`（index 和 helper 略微变大）`≈ −57`，和实测的 −56.0 对得上。
+
+**这条值得记下来的教训**：改 import 的位置会改变 Rollup 的 chunk 划分，你省下的不一定是你以为的那个数字。做完必须看产物清单，不能只看「我把谁挪走了」。
+
+### CLS 怎么守住的
+
+`.auth` 容器固定 `min-width: 132px`，登录态不管加载到哪一步，这个盒子的宽度都不变。实测两种状态几何完全一致：
+
+- 未登录：`.auth` 宽 132 px，`.nav` 左边缘 740 px，内容是「登录」
+- 已登录：`.auth` 宽 132 px，`.nav` 左边缘 740 px，内容是「测试访客 退出」
+
+两次 CLS 都是 0.000223，与优化项 7 完全相同——本项没有引入任何新的位移。
+
+代价是「登录」两个字左边会多出约 105 px 空白。换来的是登录态加载完不推动右边任何东西，这笔交易划算。
+
+窄屏没有退化：390×844 和 320×568 都实测过，`.top-in` 的 `scrollWidth === clientWidth`，不溢出。
+
+### 顺手还掉的架构债
+
+`useAuthStore(pinia).init()` 原来在 `main.ts`，语义是「应用启动就初始化登录」。改成「谁渲染 `AuthMenu`，谁初始化」，初始化时机从进程级降到组件级。
+
+顺带的好处：`main.ts` 现在不 import 任何 store，入口文件只剩「装 pinia、装路由、装 UI 库、挂载」四件事。
+
+### 这次验证顺带证明的另一件事
+
+「按需」不只有按需引入组件，还有**按需挂载**。前者减少包体积，后者减少下载次数——`hasStoredSession()` 这一行同步判断，让一个 59 KiB 的 chunk 在绝大多数访客那里从来没有发生过，成本是一个 8 行的文件。
+
+边界也要说清楚：它是「绝大多数访客不下载」，不是「所有人都不下载」。已登录用户依然要下，而且会看到一个 100 ms 左右的空白格。这不是免费的。
+
+**这条的一句话版本**：*省体积靠拆包，省请求靠别装。*
