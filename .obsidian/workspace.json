@@ -92,7 +92,7 @@
             }
           }
         ],
-        "currentTab": 5
+        "currentTab": 3
       }
     ],
     "direction": "vertical"
@@ -156,7 +156,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Program2026.md",
+                "file": "PLUGINS.md",
                 "followCursor": false,
                 "showSearch": true,
                 "searchQuery": ""
@@ -272,12 +272,12 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "e20e332dd2faad20",
+  "active": "f4b89c25065c7b41",
   "lastOpenFiles": [
+    "Program2026.md",
     "Program2026.md~RF54309eb.TMP",
     "AI.md",
     "Program2026.md~RF51d15ab.TMP",
-    "Program2026.md",
     "Program2026.md~RF6f1c8ab.TMP",
     "SKILLS.md",
     "Vite.md",
