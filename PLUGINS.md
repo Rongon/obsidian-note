@@ -14,8 +14,8 @@
 | `@laoyuehanni/dsh-git-worktree` | 分支可见性 + git worktree 隔离（每个会话一个独立工作目录） |
 | `@liustack/modlens` | 给没有视觉能力的模型接一个视觉桥（读图） |
 | `@liustack/modsearch` | 网页搜索 / 页面正文提取 / X（推特）搜索 |
+| `@michengai/dsh-skills-manager` | 统一加载并安全管理本机各 Agent 技能：查找、启用、创建、导入 |
 | `@nanmicoder/dsh-agent-teams` | 多智能体团队协作：captain + member、带依赖的任务、消息传递，web GUI 有树状监视器 |
-| `@weibaohui/skills-management` | 技能市场 + 管理本机所有 agent 的技能（Claude Code / Codex / ZCode 等十余个执行器） |
 | `billion-context` | 上下文压缩引擎：compress / decompress / search_context 等 ACP 工具链 |
 | `dsh-better-sidebar` | 把文件树、编辑器、改动、任务、侧聊并成一列，每个会话独立；同时对外提供侧边栏注册服务 |
 | `dsh-builtin-browser` | 一个真人能接管的内置浏览器，agent 通过 CDP 驱动，做 DOM 级操作 |
