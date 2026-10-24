@@ -92,7 +92,7 @@
             }
           }
         ],
-        "currentTab": 3
+        "currentTab": 5
       }
     ],
     "direction": "vertical"
@@ -156,7 +156,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "PLUGINS.md",
+                "file": "Program2026.md",
                 "followCursor": false,
                 "showSearch": true,
                 "searchQuery": ""
@@ -272,8 +272,9 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "f4b89c25065c7b41",
+  "active": "e20e332dd2faad20",
   "lastOpenFiles": [
+    "PLUGINS.md",
     "Program2026.md",
     "Program2026.md~RF54309eb.TMP",
     "AI.md",
@@ -282,7 +283,6 @@
     "SKILLS.md",
     "Vite.md",
     "MCP.md",
-    "PLUGINS.md",
     "Interview2026.md",
     "ComputerNetwork.md",
     "项目知识点重难点讲解.md",
