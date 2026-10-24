@@ -2235,3 +2235,73 @@ pnpm exec vite build --mode naive
 收录 q68 / effort / PSNR / srcset / WebP / 懒加载 / LCP / CLS / FCP / TBT / SI / TTI(已废弃) / KiB 与 KB / 按需引入 / tree-shaking / 代码分割 / preload / prefetch / Markdown 构建时编译 / SPA fallback / 双构建 / RLS / 幂等键 / 乐观更新 / CSS 变量主题 / 主题闪烁 / 字体子集 / font-display。
 
 每条四段：是什么 → 为什么这里用它 → 这个项目里的具体数字 → 面试被问到怎么说。
+
+# 认证方式收敛：只留 GitHub OAuth
+
+**做了什么**：删掉「邮箱 + 密码」的注册与登录，登录页只剩一个「用 GitHub 登录」按钮；`/register` 改成重定向到 `/login`；Element Plus 的按需清单从 5 个组件减到 2 个（`el-form` / `el-form-item` / `el-input` 没有模板再用了）。
+
+## 为什么删：那条路证明不了任何事
+
+email 登录的原始设想是「注册 → 收验证邮件 → 点链接 → 才算注册成功」。这个链条在免费版 Supabase 上走不通：
+
+| 环节 | 免费版现实 |
+| --- | --- |
+| 发确认邮件 | 内置发信每小时只有两三封，而且只发给项目成员 |
+| 换第三方 SMTP | Resend / SendGrid 免费额度够，但要域名、要配 DNS 记录 |
+| 关掉确认邮件 | 谁都能填 `a@b.com` 注册 —— 这就是当时的配置 |
+
+关掉确认之后，「邮箱」退化成一个**用户名**：它不证明任何人拥有那个地址。于是三件事一起失去意义：忘记密码（没法确认是本人）、邮箱找回（同上）、以及「用邮箱联系你」。**冒用别人的邮箱零成本**，这在一个公开站点上是不该有的承诺。
+
+GitHub OAuth 证明的是「这个人是某个 GitHub 账号的主人」，这是能验证的。
+
+## 候选方案（当初该摆出来对比的）
+
+| 方案 | 免费额度 | 接入成本 | 代价 |
+| --- | --- | --- | --- |
+| Supabase + 自己写表单 | 不限 | 已建成 | 样式贴合；但忘记密码/邮箱验证都得自己补 |
+| Supabase 官方 Auth UI | 不限 | 0.5 小时 | 固定主题，和报纸版式冲突；更新缓慢 |
+| Clerk | 1 万月活 | 1.5–2 小时 | 弹窗式 UI 是他们家的形状；账号数据锁在他们那 |
+| Auth0 | 7,500 月活 | 1.5 小时 | 为 3 个输入框引一套企业配置，过重 |
+| Firebase Auth | 不限 | 1.5 小时 | 同样不提供现成 UI，表单还是自己写；换一整个生态 |
+
+**关键判断**：换方案不会更安全 —— 这四个都是托管认证，安全同样外包，差别只在界面长相。为一个登录框换掉整个账号体系，换来的是另一个厂商的锁定。
+
+**手搓的边界要说清**：手搓的只是表单层（三个输入框 + 错误文案）。密码哈希、session 签发、JWT 刷新、限流、防撞库都在 Supabase 内部调用 —— 这一段从没自己写过。
+
+## 数字
+
+| | 删之前 | 删之后 |
+| --- | --- | --- |
+| 入口 CSS（raw / gzip） | 93.30 kB / 14.59 kB | **87.59 kB / 14.00 kB** |
+| 入口 JS（raw / gzip） | 330.21 kB / ~99 kB | **305.22 kB / 92.30 kB** |
+| Element 组件数 | 5 | **2** |
+| 登录相关页面 | 登录页 + 注册页 | **登录页（一个按钮）** |
+
+省下的是表单件与校验逻辑，量不大；真正的收益是**少了一条走不通的路径**和一套维护成本。
+
+## GitHub OAuth 怎么接（踩过的坑）
+
+1. GitHub 侧：`Settings → Developer settings → OAuth Apps → New OAuth App`
+   - Homepage URL：`https://rongon.github.io/Program2026/`
+   - **Authorization callback URL 必须是 Supabase 的**：`https://<project>.supabase.co/auth/v1/callback`。填成自己的站点会得到 `redirect_uri_mismatch`。
+2. GitHub 侧那三个勾：**Allow wildcard matching 不勾**（等于让任意子域都能接 token）、**Enable Device Flow 不勾**（那是给 CLI/电视的）、**Expire user access tokens 保持勾**（我们登录后不调 GitHub API，过期无影响）。
+3. Supabase 侧：`Authentication → Sign In / Providers → GitHub`，填 Client ID / Secret 并 Save。
+   - **别点 `OAuth Server`**：那是让 Supabase 给别人当身份提供方，方向正好相反。
+   - `Allow users without an email` **保持关闭**：`displayName` 会用邮箱前缀兜底，允许无邮箱用户会得到空名字。
+4. Supabase 侧：`URL Configuration` 的 Site URL 和 Redirect URLs 都要含站点地址，否则授权回来会落到空白页。
+5. 前端：`supabase.auth.signInWithOAuth({ provider: 'github', options: { redirectTo } })`，`redirectTo` 用 `new URL(import.meta.env.BASE_URL, location.origin)` 拼，本地与 Pages 各自正确。
+6. **点按钮前先探一次** `auth/v1/settings` 的 `external.github`：没开就原地提示，而不是把访客甩到 Supabase 的 JSON 报错页上。查不到（网络问题）就放行，不因为一次探测失败把登录挡死。
+
+## 面试会被问
+
+**「为什么只支持 GitHub 登录？」**
+
+> 「因为另一个选项不可验证。免费版的发信额度不够做邮箱验证，关掉验证之后邮箱就只是个用户名 —— 谁都能填别人的。认证方式只有『能验证身份』和『不能验证身份』两种，留着后一种是给访客一个假承诺。GitHub 证明的是他拥有那个账号，这就够了。」
+
+**「为什么不用 Clerk / Auth0 这类现成的？」**
+
+> 「它们解决的也是托管认证，安全那部分我本来就没手写 —— 我写的是三个输入框。换过去多一个厂商、多一套主题冲突，少的东西是零。真要说区别，只有一个：用户会觉得登录界面不是这个站的。」
+
+**「没有 GitHub 的人怎么办？」**
+
+> 「读不受影响，只是不能留言。这个站的读者和面试官基本都有 GitHub；真没有的人可以发邮件给我。」
