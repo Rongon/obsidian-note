@@ -2226,3 +2226,12 @@ pnpm exec vite build --mode naive
 - 「你怎么保证慢版不会哪天又变旧？」→ 它是 CI 每次部署时从当前源码构建的，和快版同一次 Actions 运行（`deploy.yml` 里两步 `vite build`，一个 `--mode ghpages`、一个 `--mode naive`），改了代码两边一起变。
 - 「那你测的数字还准吗？」→ 准，但要连着「同一份产物」说：快版/慢版都在同一次部署里产出，同一台机器、同一份 Chrome、冷缓存各跑 5 次取中位数。
 - 「为什么不干脆给慢版加个 `?slow=1` 参数？」→ 因为那就成了一个开关就变快的假实验；真实用户不会带着参数来。两个独立产物才能各自被 Lighthouse 当成一个普通站点打分开，也才能让面试官直接开 DevTools 看传输量。
+---
+
+## 名词表：本项目用到的所有知识点
+
+单独一份文件，不放在这里：**[Program2026-知识点.md](./Program2026-知识点.md)**
+
+收录 q68 / effort / PSNR / srcset / WebP / 懒加载 / LCP / CLS / FCP / TBT / SI / TTI(已废弃) / KiB 与 KB / 按需引入 / tree-shaking / 代码分割 / preload / prefetch / Markdown 构建时编译 / SPA fallback / 双构建 / RLS / 幂等键 / 乐观更新 / CSS 变量主题 / 主题闪烁 / 字体子集 / font-display。
+
+每条四段：是什么 → 为什么这里用它 → 这个项目里的具体数字 → 面试被问到怎么说。
