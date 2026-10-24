@@ -2240,6 +2240,10 @@ pnpm exec vite build --mode naive
 
 **做了什么**：删掉「邮箱 + 密码」的注册与登录，登录页只剩一个「用 GitHub 登录」按钮；`/register` 改成重定向到 `/login`；Element Plus 的按需清单从 5 个组件减到 2 个（`el-form` / `el-form-item` / `el-input` 没有模板再用了）。
 
+**后来再收一次**：顶栏的「登录」和评论区的「用 GitHub 登录」都改成**直接开始授权**，不再经过登录页 —— 少一次跳转就是少一次等待。`/login` 还留着，但只在两种情况下会被看到：别处的旧链接，或者授权失败。它自己也带一次自动跳转（用 `sessionStorage` 标记防止失败后无限重跳）。
+
+**为什么不用静态 import 拿登录 store**：`DefaultLayout.vue` 里点登录时是 `await import('@/stores/auth')`。写成静态 import，Supabase SDK 会立刻被拽回入口包（实测入口从 126 kB 涨回 311 kB 那一档），优化项 8 白做。**代价与取舍**：动态 import 让首次点击登录多等一次 chunk 下载（约 40 KB，本机 <100 ms），换来未登录访客永远不下载它。
+
 ## 为什么删：那条路证明不了任何事
 
 email 登录的原始设想是「注册 → 收验证邮件 → 点链接 → 才算注册成功」。这个链条在免费版 Supabase 上走不通：
