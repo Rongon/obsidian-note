@@ -1090,5 +1090,139 @@ Function.prototype.myCall = function (ctx, ...args) {
 
 ---
 
+# 八、按 Interview2026 补齐（原文档有、上面没覆盖的）
+
+> 这一章专门补 `Interview2026.md` 里列了、但前面七章没正面答的题。
+> 前面已经答过的，在[第九章对照表](#九对照表interview2026-在哪)里给题号，不重复写。
+
+## 8.1 JavaScript 基础
+
+#### 146. JS 有哪些数据类型？怎么判断？
+
+7 种原始类型：`undefined`、`null`、`boolean`、`number`、`string`、`symbol`、`bigint`；引用类型：`object`（含数组、函数、Date、RegExp）。
+
+判断：
+
+- `typeof`：能区分原始类型，但 `typeof null === 'object'`（历史遗留）、函数返回 `'function'`、其他对象都返回 `'object'`。
+- `instanceof`：查原型链，只能判断对象，且跨 iframe 失效。
+- `Object.prototype.toString.call(x)`：最准，返回 `[object Array]` 这种。
+- `Array.isArray()` 判数组。
+
+#### 147. `null` 和 `undefined` 的区别？
+
+- `undefined`：声明未赋值、函数无返回值、访问不存在的属性 —— "系统给的"。
+- `null`：人为表示"空" —— "人给的"。
+
+`typeof null === 'object'`（第一版实现的 bug，为兼容保留）；`null == undefined` 为 `true`，`===` 为 `false`；`JSON.stringify({a: undefined})` 会丢掉该键，`null` 会保留。
+
+#### 148. 箭头函数和普通函数的区别？
+
+1. `this`：箭头函数没有自己的，取定义时外层；普通函数看调用方式。
+2. `arguments`：箭头函数没有（用 rest 参数）。
+3. `new`：箭头函数不能当构造函数（没有 `prototype`）。
+4. 不能用 `yield`（不能做 Generator）。
+5. 没有 `super` / `new.target`。
+6. 不能通过 `call/apply/bind` 改 `this`。
+
+#### 149. `call`、`apply`、`bind` 的区别？
+
+- 都是改 `this` 指向。
+- `call(thisArg, a, b)` 参数逐个传；`apply(thisArg, [a, b])` 参数数组。
+- `bind` 不立即执行，返回一个新函数（可绑定参数、可被 `new` 覆盖）。
+
+手写见 [§144](#144-手写-call--apply)。
+
+#### 150. JS 有哪几种继承方式？各自的问题？
+
+1. **原型链继承**：`Child.prototype = new Parent()` —— 父类引用属性被所有实例共享，无法传参。
+2. **构造函数继承**：在子类里 `Parent.call(this)` —— 能传参、属性独立，但方法不能复用、拿不到父类原型方法。
+3. **组合继承**（前两者结合）—— 父类构造函数被调两次。
+4. **寄生组合继承**（最常用）：`Child.prototype = Object.create(Parent.prototype)` + `constructor` 指回去 + `Parent.call(this)`。
+5. **ES6 class extends**：语法糖，本质是寄生组合 + `super`。
+
+#### 151. ES6 `class` 和 ES5 构造函数有什么区别？
+
+本质都是原型，差别：`class` 不会提升（有暂时性死区）、必须 `new` 调用、方法不可枚举、内部默认严格模式、支持 `extends`/`super`/静态方法/私有字段。
+
+## 8.2 异步与运行机制
+
+#### 152. 说说你对 Promise 的理解。
+
+三种状态：`pending → fulfilled / rejected`，一旦变就不能再改。`then` 返回**新的** Promise（所以能链式），返回普通值会被包成 resolved，返回值是 Promise 就等它；`catch` 捕获链上任意一环的错误；`finally` 不改变结果。
+
+常见追问：`then` 里的回调永远在微任务里执行（所以和 `setTimeout` 的输出顺序可考）。
+
+#### 153. `async/await` 的原理是什么？
+
+`async` 函数调用后返回 Promise；`await` 后面的表达式会被包成 Promise，然后**暂停函数执行**，把后续代码塞进 `.then`（即微任务），等 resolve 再恢复。
+
+本质是 Generator + 自执行器的语法糖，所以它不会阻塞主线程，只是"看起来同步"。
+
+#### 154. 宏任务和微任务分别有哪些？执行顺序？
+
+- 宏任务：`script` 整体、`setTimeout`、`setInterval`、`setImmediate`(Node)、I/O、UI 事件。
+- 微任务：`Promise.then/catch/finally`、`queueMicrotask`、`MutationObserver`、`process.nextTick`(Node 优先于 Promise)。
+
+顺序：执行一个宏任务 → 清空**所有**微任务（包括微任务里新产生的）→ 渲染 → 下一个宏任务。
+
+经典题：`console.log(1); setTimeout(()=>console.log(2)); Promise.resolve().then(()=>console.log(3)); console.log(4)` → `1 4 3 2`。
+
+#### 155. 什么是事件委托？优缺点？
+
+把子元素的监听挂在父元素上，用 `event.target` 判断具体是哪个子元素（靠事件冒泡）。
+
+优点：只挂一个监听（内存省）、动态新增的子元素自动生效。缺点：`event.target` 可能是内部子节点（要用 `closest` 找）、有不冒泡的事件（`focus`、`mouseenter`）不适用、层级太深时有性能与调试成本。
+
+## 8.3 语言特性
+
+#### 156. 什么是柯里化？怎么写？
+
+把 `f(a, b, c)` 变成 `f(a)(b)(c)`：一次只收部分参数，返回新函数等剩余参数。
+
+用场景：参数复用（把固定参数先绑好）、延迟执行、函数组合。
+
+```js
+const curry = (fn) => {
+  const _c = (...args) =>
+    args.length >= fn.length ? fn(...args) : (...rest) => _c(...args, ...rest);
+  return _c;
+};
+```
+
+#### 157. Generator 和 `yield` 是什么？
+
+`function*` 定义的函数不直接执行，调用后返回迭代器；每次 `next()` 执行到下一个 `yield` 停下，`yield` 的值作为 `value` 返回，传入 `next(v)` 的值作为上一次 `yield` 的返回值。
+
+用途：惰性序列（无限数组）、异步流程控制（`async/await` 的前身）、状态机。
+
+## 8.4 TypeScript
+
+#### 158. TypeScript 和 JavaScript 的区别？TS 的优势？
+
+TS 是 JS 的超集：加静态类型、接口、泛型、枚举、访问修饰符，编译后擦除类型变成 JS（运行时没有类型）。
+
+优势：编译期发现字段名/类型错误、IDE 补全和重构安全、类型即文档、接口契约显式化。
+
+**要说清代价**：写的时候更慢、类型体操容易过度、第三方库没类型要自己补 `.d.ts`。
+
+#### 159. `Partial`、`Pick`、`Omit` 怎么实现？
+
+靠映射类型 + `keyof`：
+
+```ts
+type Partial<T> = { [K in keyof T]?: T[K] };
+type Pick<T, K extends keyof T> = { [P in K]: T[P] };
+type Omit<T, K extends keyof any> = Pick<T, Exclude<keyof T, K>>;
+```
+
+配套还有 `Required`（去掉 `?`）、`Readonly`、`Record`、`Exclude/Extract/NonNullable`、`ReturnType/Parameters`。
+
+#### 160. 泛型约束怎么用？
+
+`<T extends { id: number }>` 限制必须有 `id`；`<K extends keyof T>` 限制 K 必须是 T 的键（所以 `obj[key]` 不会报错）。
+
+面试常考：写一个 `get<T, K extends keyof T>(obj: T, key: K): T[K]`。
 
 ---
+
+
