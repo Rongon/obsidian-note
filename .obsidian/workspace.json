@@ -48,9 +48,22 @@
               "icon": "lucide-file",
               "title": "WorkExperience"
             }
+          },
+          {
+            "id": "f6f2fff9b7850f5c",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "InterviewQuestion.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "InterviewQuestion"
+            }
           }
-        ],
-        "currentTab": 1
+        ]
       }
     ],
     "direction": "vertical"
@@ -114,7 +127,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Blog.md",
+                "file": "Interview2026.md",
                 "followCursor": false,
                 "showSearch": true,
                 "searchQuery": ""
@@ -230,13 +243,16 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "c55d575e5b0772a5",
+  "active": "c8962521f7c6699a",
   "lastOpenFiles": [
+    "InterviewQuestion.md",
+    "Interview2026.md",
+    "InterviewQuestion.md~RF1b3e17cc.TMP",
+    "InterviewQuestion.md~RF1b3db48e.TMP",
+    "Blog.md",
     "Blog.md~RF1a80aa73.TMP",
     "WorkExperience.md",
-    "Blog.md",
     "Pnpm.md",
-    "Interview2026.md",
     "AI.md",
     "PLUGINS.md",
     "Blog.md.bak-20261027",
@@ -251,7 +267,6 @@
     "Program2026-知识点.md",
     "Program2026.md~RF54309eb.TMP",
     "Program2026.md~RF51d15ab.TMP",
-    "Program2026.md~RF6f1c8ab.TMP",
     "SKILLS.md",
     "Vite.md",
     "ComputerNetwork.md",
