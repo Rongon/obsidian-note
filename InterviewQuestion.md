@@ -1223,6 +1223,282 @@ type Omit<T, K extends keyof any> = Pick<T, Exclude<keyof T, K>>;
 
 面试常考：写一个 `get<T, K extends keyof T>(obj: T, key: K): T[K]`。
 
+## 8.5 Vue 补充
+
+#### 161. Vue 有什么特点？MVVM 是什么？
+
+特点：声明式渲染、响应式、组件化、单文件组件、渐进式（可以只用一部分）。
+
+MVVM：Model（数据）↔ ViewModel（Vue 实例/响应式系统）↔ View（模板）。ViewModel 把数据变化映射到视图、把视图交互映射回数据，开发者不用手动操作 DOM。
+
+和 MVC 的区别：MVVM 是双向绑定，ViewModel 承担了转换，不需要写 Controller 那层胶水。
+
+#### 162. 虚拟 DOM 是什么？为什么快？为什么不总是快？
+
+虚拟 DOM 是 JS 对象描述真实 DOM 结构，更新时先在内存里 diff 出最小变更集，再批量打到真实 DOM 上。
+
+"快"的准确说法是：**避免不必要的真实 DOM 操作**（真实 DOM 操作很贵），而不是虚拟 DOM 本身快。首次渲染时它反而比直接写 HTML 慢（多了一层对象+diff）。
+
+所以「虚拟 DOM 一定比手写 DOM 快」是错的；它快在"数据频繁变化的中大型界面"。
+
+#### 163. Vue 的组件通信有哪些方式？
+
+1. `props` 父传子（配合 `emit` 子传父）。
+2. `provide / inject` 跨层级。
+3. `attrs`（`$attrs`）透传未声明的属性/事件。
+4. `ref` + `defineExpose` 父调子方法。
+5. 状态管理（Pinia）。
+6. 事件总线（`mitt`；Vue 3 移除了 `$on/$emit` 实例方法）。
+
+#### 164. 用 TS 写 `defineProps` / `defineEmits` 怎么写？
+
+```ts
+const props = defineProps<{ list: Row[]; loading?: boolean }>();
+const emit = defineEmits<{ (e: 'submit', id: number): void; (e: 'cancel'): void }>();
+```
+
+Vue 3.3+ 还支持 `defineProps<{ list?: Row[] }>()` 的响应式解构 + `withDefaults`。
+
+#### 165. `setup` 做了什么？`<script setup>` 编译后是什么？
+
+`setup` 是组合式 API 的入口：在组件创建时（`beforeCreate` 之前）执行一次，返回的对象/顶层绑定暴露给模板。它没有 `this`。
+
+`<script setup>` 是语法糖，编译后变成一个返回渲染函数或绑定对象的 `setup()`，顶层变量自动暴露，`defineProps/defineEmits/defineExpose` 是编译宏（不是运行时函数）。
+
+#### 166. Pinia 怎么用？（组合式写法）
+
+```ts
+export const useUserStore = defineStore('user', () => {
+  const name = ref('');
+  const isLogin = computed(() => !!name.value);
+  function login(n: string) { name.value = n; }
+  return { name, isLogin, login };
+});
+```
+
+用 `state/getters/actions` 的选项式写法也行；组合式更接近普通 `setup`，类型推导好。
+
+## 8.6 React 补充
+
+#### 167. React 有什么特点？JSX 是什么？
+
+特点：声明式、组件化、单向数据流、虚拟 DOM + Fiber、生态大。
+
+JSX 是 `React.createElement` 的语法糖，编译后是普通函数调用（或被新 JSX transform 编译成 `jsx()`），最后产出描述 UI 的对象树（React element）。JSX 里 `{}` 可以写表达式，但不能写语句。
+
+#### 168. 函数组件和类组件有什么区别？
+
+- 函数组件：`props` 入参、用 Hooks 管状态与副作用、没有 `this`、闭包捕获当次渲染的值。
+- 类组件：有实例、`this.state`、生命周期方法、`shouldComponentUpdate` 可精确控制。
+
+现在默认写函数组件（官方推荐），类组件只在老代码里维护。
+
+#### 169. `useState` 的函数式更新是干什么的？
+
+`setCount(count + 1)` 用的是**本次渲染闭包里的** `count`；连续调两次只会 +1。
+
+`setCount(c => c + 1)` 拿到的是最新的 state，连续调用能连续累加。凡是"下一次值依赖上一次值"的场景都必须用函数式更新。
+
+#### 170. `useEffect` 的依赖数组怎么理解？
+
+- 不传：每次渲染后都跑。
+- `[]`：只在挂载后跑一次（清理函数在卸载时跑）。
+- `[a, b]`：`a` 或 `b` 变了才跑。
+
+坑：依赖里漏了变量会读到旧闭包值（ESLint 的 `exhaustive-deps` 就是查这个）；每次渲染新建的对象/函数会导致无限循环。
+
+#### 171. 自定义 Hooks 怎么写？
+
+一个以 `use` 开头的函数，内部调用其他 Hooks，返回状态与操作。
+
+```ts
+function useDebouncedValue<T>(value: T, delay = 300) {
+  const [v, setV] = useState(value);
+  useEffect(() => {
+    const t = setTimeout(() => setV(value), delay);
+    return () => clearTimeout(t);
+  }, [value, delay]);
+  return v;
+}
+```
+
+约定：`use` 前缀（让 lint 能校验）、返回数组便于改名、内部不要再有条件地调 Hooks。
+
+#### 172. React 怎么性能优化？
+
+按代价从低到高：减少不必要的 state（能算的不要存）、`memo` + 稳定的 props 引用（`useMemo`/`useCallback`）、列表用稳定 `key`、长列表虚拟化、`useDeferredValue`/`startTransition` 降级非关键更新、代码分割 + 懒加载、`React.Profiler` 定位。
+
+顺序很重要：**先测量再优化**，不要一上来就到处 `memo`。
+
+#### 173. React 的 diff 算法和 Vue 的有什么不同？
+
+共同点：同层比较、不同类型直接替换、靠 `key` 复用。
+
+React：Fiber 架构下可中断渲染（时间切片），旧版是同层递归比较；Vue 3：编译期标记（Patch Flag）+ 静态提升 + 最长递增子序列减少移动。
+
+#### 174. Context API 怎么用？有什么性能问题？
+
+`createContext` → `<Provider value>` → `useContext`。
+
+性能问题：**Provider 的 `value` 变了，所有消费组件都重渲染**（无法像信号那样精准订阅）。所以要把 value 拆细（多个 Context）、用 `useMemo` 稳定引用，或者换用支持选择器订阅的方案。
+
+#### 175. Redux 的工作原理？
+
+单向数据流：`dispatch(action)` → reducer 根据 `action` 和旧 state 算出新 state（纯函数）→ store 更新 → 订阅者收到通知 → 视图重渲染。
+
+中间件（`redux-thunk`/`redux-saga`）在 dispatch 到 reducer 之间插一层，用来处理异步和副作用。
+
+## 8.7 计算机网络补充
+
+#### 176. 网络分层与常用协议？
+
+- 应用层：HTTP/HTTPS、DNS、FTP、SMTP、WebSocket。
+- 传输层：TCP（可靠、有连接）、UDP（快、无连接）。
+- 网络层：IP、ICMP（ping）、ARP。
+- 数据链路/物理层：以太网、Wi-Fi。
+
+分层意义：每层只关心自己的职责，替换一层不影响其他层（比如 HTTPS 换 HTTP/3 用的是 QUIC 替代 TCP）。
+
+#### 177. TCP 和 UDP 的区别？怎么选？
+
+TCP：面向连接、可靠（确认+重传）、有序、有流量与拥塞控制、头部大、慢。UDP：无连接、不可靠、无顺序保证、头部小、快。
+
+选择：网页/文件/数据库用 TCP；直播、游戏、语音、DNS 查询用 UDP（丢一点无所谓，但不能卡）。
+
+#### 178. 为什么是三次握手、四次挥手？
+
+三次握手是为了让**双方都确认对方的收发能力**：客户端 SYN → 服务端 SYN+ACK → 客户端 ACK。两次的话服务端无法确认客户端能收；四次是多余的合并。
+
+四次挥手是因为 TCP 是全双工，两个方向要**各自**关闭：一方 FIN、对方 ACK（我收到但可能还有数据要发）、对方 FIN、我 ACK。服务端可能还有数据没发完，所以 ACK 和 FIN 不能合并。
+
+#### 179. TCP 怎么保证可靠性？滑动窗口和拥塞控制是什么？
+
+可靠：序号 + 确认（ACK）+ 超时重传 + 校验和 + 去重 + 按序重组。
+
+滑动窗口：发送方可以连续发多个未确认的包（窗口大小），靠接收方通告的窗口控制"能发多少"，避免停等导致的浪费。
+
+拥塞控制：慢启动（指数涨）、拥塞避免（线性涨）、快重传、快恢复。目标是别把网络压垮。
+
+#### 180. 常见 HTTP 状态码？
+
+- 2xx：200 成功、201 创建、204 无内容。
+- 3xx：301 永久重定向、302 临时、304 协商缓存命中。
+- 4xx：400 参数错、401 未认证、403 无权限、404 不存在、429 限流。
+- 5xx：500 服务端错、502 网关错、503 不可用、504 网关超时。
+
+#### 181. HTTPS 为什么安全？大概流程？
+
+解决 HTTP 的三个问题：明文（加密）、可篡改（完整性）、可冒充（身份认证）。
+
+流程：TCP 连接后 TLS 握手 —— 客户端发随机数和支持的算法 → 服务端回随机数 + 证书 → 客户端校验证书链（CA 签名）→ 用 ECDHE 交换出**会话密钥** → 之后用对称加密通信。
+
+核心：**非对称加密只用来安全地协商密钥，真正的数据传输用对称加密**（快）。
+
+#### 182. 短连接和长连接怎么选？
+
+短连接：每次请求新建 TCP，用完关闭 —— 简单，但握手成本高。长连接（`Connection: keep-alive`）：复用连接发多次请求。
+
+HTTP/1.1 默认长连接；HTTP/2 更进一步在一个连接上多路复用。所以"减少握手开销"这件事在 HTTP/2 下已经不是主要矛盾。
+
+#### 183. GET 和 POST 的区别？
+
+- 语义：GET 查询（幂等、可缓存、可被浏览器记录），POST 提交（不幂等）。
+- 参数位置：GET 在 URL（有长度限制、会被日志记录），POST 在 body。
+- 安全性：都不加密，POST 只是不显示在地址栏——**不是安全保证**。
+
+#### 184. Cookie、Session、Token（JWT）的区别？
+
+- **Cookie**：浏览器存的小段数据，自动随请求发给同域服务端。
+- **Session**：服务端存会话状态，客户端只存 `sessionId`（通常在 cookie 里）。缺点：服务端要存、多机要共享。
+- **Token/JWT**：服务端签发、客户端保存，服务端无状态校验（签名）。缺点：无法主动失效（要配黑名单/短过期 + refresh token）。
+
+我的博客用的是第三方托管（Supabase Auth），登录后拿到的是 token，前端只负责带上它和做未登录降级。
+
+---
+
+# 九、对照表：Interview2026 在哪
+
+> 左边是 `Interview2026.md` 的题目，右边是本文对应题号。**两边合起来就是你完整的题库**：
+> 它写得更长更教科书，我这边更短更口语、且贴在简历上。
+
+| Interview2026 题目 | 本文题号 |
+| --- | --- |
+| var/let/const | 125 |
+| JS 数据类型与判断 | 146（新） |
+| `==` 和 `===` | 126 |
+| null 和 undefined | 147（新） |
+| 闭包 | 120 |
+| 箭头函数 vs 普通函数 | 148（新） |
+| this 指向 | 119 |
+| call/apply/bind | 149（新）+ 144（手写） |
+| Promise 理解 | 152（新）+ 122 |
+| async/await 原理 | 153（新）+ 123 |
+| 宏任务微任务 | 154（新）+ 59 |
+| 事件循环 | 59 |
+| 原型与原型链 | 118 |
+| JS 继承 5 种 | 150（新） |
+| class vs ES5 构造函数 | 151（新） |
+| 深拷贝 | 121 + 140（手写） |
+| 防抖节流 | 124 + 138/139（手写） |
+| 事件委托 | 155（新） |
+| 柯里化 | 156（新） |
+| Generator / yield | 157（新） |
+| TS vs JS | 158（新） |
+| interface vs type | 26 |
+| any/unknown/never | 27 |
+| 泛型与约束 | 160（新） |
+| Partial/Pick/Omit 实现 | 159（新） |
+| strict 选项 | 30 |
+| 第三方库类型声明 | 31 |
+| Vue 特点 / MVVM | 161（新） |
+| Vue 响应式原理 | 1 |
+| 虚拟 DOM | 162（新） |
+| 组件通信 | 163（新） |
+| props / emits（TS） | 164（新） |
+| 插槽 | 11 |
+| keep-alive | 9 |
+| Composition vs Options | 16 |
+| ref vs reactive | 2 |
+| computed vs watch | 3 |
+| setup 与 `<script setup>` | 165（新） |
+| 路由模式 | 12 |
+| 路由守卫 | 13 |
+| 路由懒加载 | 15 |
+| Pinia vs Vuex / 用法 | 14 + 166（新） |
+| React 特点 / JSX | 167（新） |
+| 函数组件 vs 类组件 | 168（新） |
+| Props | 72（表格组件 props 设计） |
+| 受控 vs 非受控 | 19 |
+| Hooks 是什么 | 171（新）· 自定义 Hooks |
+| useState/useEffect 用法 | 170（新） |
+| useEffect 依赖数组 | 170（新） |
+| useMemo vs useCallback | 23 |
+| React 性能优化 | 172（新） |
+| React.memo | 23 |
+| React diff | 173（新）+ 7（Vue diff） |
+| Context API | 174（新） |
+| Redux 原理 | 175（新） |
+| Zustand vs Redux | 24 |
+| 网络分层与协议 | 176（新） |
+| TCP vs UDP | 177（新） |
+| 三次握手/四次挥手 | 178（新） |
+| 滑动窗口/拥塞控制 | 179（新） |
+| TCP 可靠性 | 179（新） |
+| HTTP 状态码 | 180（新） |
+| HTTP vs HTTPS | 181（新）+ 134（握手） |
+| HTTP/2 为什么快 | 64 |
+| 短连接/长连接 | 182（新） |
+| GET vs POST | 183（新） |
+| 输入 URL 到渲染 | 58 |
+| Cookie vs Session | 184（新）+ 130（存储选型） |
+| Token / JWT | 184（新） |
+| useState 函数式更新 | 169（新） |
+
+**怎么用这两份**：`Interview2026.md` 当"字典"（要展开原理时查它），本文当"口试稿"（面试前一天只看 ⭐ 和第六章手写）。
+
+---
+
+
 ---
 
 

@@ -63,7 +63,8 @@
               "title": "InterviewQuestion"
             }
           }
-        ]
+        ],
+        "currentTab": 3
       }
     ],
     "direction": "vertical"
@@ -127,7 +128,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Interview2026.md",
+                "file": "InterviewQuestion.md",
                 "followCursor": false,
                 "showSearch": true,
                 "searchQuery": ""
@@ -243,10 +244,10 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "c8962521f7c6699a",
+  "active": "f6f2fff9b7850f5c",
   "lastOpenFiles": [
-    "InterviewQuestion.md",
     "Interview2026.md",
+    "InterviewQuestion.md",
     "InterviewQuestion.md~RF1b3e17cc.TMP",
     "InterviewQuestion.md~RF1b3db48e.TMP",
     "Blog.md",
