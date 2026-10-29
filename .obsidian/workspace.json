@@ -50,7 +50,7 @@
             }
           }
         ],
-        "currentTab": 1
+        "currentTab": 2
       }
     ],
     "direction": "vertical"
@@ -114,7 +114,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Blog.md",
+                "file": "WorkExperience.md",
                 "followCursor": false,
                 "showSearch": true,
                 "searchQuery": ""
@@ -230,11 +230,11 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "c55d575e5b0772a5",
+  "active": "b4a73bf02849b5be",
   "lastOpenFiles": [
+    "Blog.md",
     "Pnpm.md",
     "WorkExperience.md",
-    "Blog.md",
     "Interview2026.md",
     "AI.md",
     "PLUGINS.md",
