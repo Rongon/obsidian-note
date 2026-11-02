@@ -2,7 +2,7 @@
 
 ## TS的数据类型
 
-<img src="C:\Users\13035\AppData\Roaming\Typora\typora-user-images\image-20240105213032104.png" alt="image-20240105213032104" style="zoom:50%;" />
+![](https://raw.githubusercontent.com/Rongon/obsidian-note/main/20261102203014491.png)
 
 ---
 
@@ -347,7 +347,7 @@ const arr2: Array<string> = ['1', '2', '3']
 
 ### defineProps
 
-```vue
+```ts
 //props
 export interface Props {
   msg?: string
@@ -365,7 +365,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 ### defineEmits
 
-```vue
+```ts
 // (e: 事件名, 参数名1: 类型， 参数名2：类型): void
 const emit = defineEmits<{
 	(e: 'func', gift: string): void
@@ -376,7 +376,7 @@ const emit = defineEmits<{
 
 ### ref
 
-```vue
+```ts
 //基本类型
 const str1 = ref<string>('你好')
     
@@ -397,7 +397,7 @@ const list = ref<Todo[]>([
 
 ### 事件类型PointEvent
 
-```
+```ts
 const hClick = (e: PointerEvent) => {
 	console.log(e.pageX, e.pageY)
 }
@@ -407,7 +407,7 @@ const hClick = (e: PointerEvent) => {
 
 ### template ref
 
-```
+```ts
 <img src='xxxxxxxxxxxx'>
 
 const image1 = ref<HTMLImageElement | null>(null)
@@ -430,17 +430,16 @@ npm install @types/xxx
 
 ​	多处用到相同类型，自建一个.d.ts，按需导出导入
 
-​	<img src="C:\Users\13035\AppData\Roaming\Typora\typora-user-images\image-20240113042240733.png" alt="image-20240113042240733" style="zoom:67%;" /><img src="C:\Users\13035\AppData\Roaming\Typora\typora-user-images\image-20240113042319931.png" alt="image-20240113042319931" style="zoom:67%;" />						
+![](https://raw.githubusercontent.com/Rongon/obsidian-note/main/20261102203305843.png)![](https://raw.githubusercontent.com/Rongon/obsidian-note/main/20261102203339407.png)					
 
-<img src="C:\Users\13035\AppData\Roaming\Typora\typora-user-images\image-20240113042346614.png" alt="image-20240113042346614" style="zoom:67%;" />
+![](https://raw.githubusercontent.com/Rongon/obsidian-note/main/20261102203359613.png)
 
 ---
 
 ### axios的ts提示
 
 ​	**axios.get<T>**
-
-```vue
+```ts
 type ChannelsRes = {
 	data: {
 		channels: {
