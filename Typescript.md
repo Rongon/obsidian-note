@@ -438,8 +438,9 @@ npm install @types/xxx
 
 ### axios的ts提示
 
-​	**axios.get<T>**
+​	
 ```ts
+// axios.get<T>
 type ChannelsRes = {
 	data: {
 		channels: {

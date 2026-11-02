@@ -150,7 +150,8 @@
               "title": "大纲"
             }
           }
-        ]
+        ],
+        "currentTab": 3
       }
     ],
     "direction": "horizontal",
@@ -256,7 +257,7 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "24dc785206d36bd0",
+  "active": "772ec373c92781d1",
   "lastOpenFiles": [
     "20261102203359613.png",
     "20261102203339407.png",
