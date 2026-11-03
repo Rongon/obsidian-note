@@ -1808,7 +1808,8 @@ const attrs = useAttrs()
 </MyComponent>
 ```
 
-![scoped slots diagram](https://cn.vuejs.org/assets/scoped-slots.B67tIPc5.svg)
+![image.png](https://raw.githubusercontent.com/Rongon/obsidian-note/main/20261103175032211.png)
+
 
 ---
 
