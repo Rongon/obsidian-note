@@ -145,11 +145,11 @@ watch(() => userInfo.value.age, (newValue, oldValue) => {
 
 ​	**通过ref获取dom或者组件**
 
-<img src="C:\Users\13035\AppData\Roaming\Typora\typora-user-images\image-20231224042538420.png" alt="image-20231224042538420" style="zoom:50%;" />
+![](https://raw.githubusercontent.com/Rongon/obsidian-note/main/20261103174152136.png)
 
 ​	**默认setup语法糖下组件内部的属性和方法是不开放的，若要开放，使用definedExpose()编译宏指定**
 
-<img src="C:\Users\13035\AppData\Roaming\Typora\typora-user-images\image-20231224042756406.png" alt="image-20231224042756406" style="zoom: 67%;" />
+![](https://raw.githubusercontent.com/Rongon/obsidian-note/main/20261103174232858.png)
 
 ---
 
@@ -235,7 +235,7 @@ export const myInjectionKey = Symbol()
 
 ​	setup语法使得我们很难去定义和setup平级的属性(如：optionsAPI)，此时就可以用defineOptions({})
 
-<img src="C:\Users\13035\AppData\Roaming\Typora\typora-user-images\image-20231224051156556.png" alt="image-20231224051156556" style="zoom:67%;" />
+![](https://raw.githubusercontent.com/Rongon/obsidian-note/main/20261103174304908.png)
 
 ### 异步组件
 
@@ -387,11 +387,13 @@ export const useCounterStore = defineStore('counter', {
 
 ​	组合式：
 
-<img src="C:\Users\13035\AppData\Roaming\Typora\typora-user-images\image-20231224055146351.png" alt="image-20231224055146351" style="zoom:50%;" />
+![image.png](https://raw.githubusercontent.com/Rongon/obsidian-note/main/20261103174345548.png)
+
 
 2. actions
 
-<img src="C:\Users\13035\AppData\Roaming\Typora\typora-user-images\image-20231224055848855.png" alt="image-20231224055848855" style="zoom:50%;" />
+![image.png](https://raw.githubusercontent.com/Rongon/obsidian-note/main/20261103174405695.png)
+
 
 3. getter
 
@@ -401,13 +403,13 @@ export const useCounterStore = defineStore('counter', {
 
 ​	state其底层是用reactive实现的，如果解构会失去响应式，如果想保留响应式，使用storeToRefs()
 
-```
+```js
 const { name, doubleCount } = storeToRefs(store)
 ```
 
 ​	action可以直接解构
 
-```
+```js
 const { fn } = store
 ```
 
