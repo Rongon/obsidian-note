@@ -77,7 +77,8 @@
               "title": "InterviewQuestion"
             }
           }
-        ]
+        ],
+        "currentTab": 4
       }
     ],
     "direction": "vertical"
@@ -141,7 +142,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Typescript.md",
+                "file": "InterviewQuestion.md",
                 "followCursor": false,
                 "showSearch": true,
                 "searchQuery": ""
@@ -257,14 +258,15 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "772ec373c92781d1",
+  "active": "f6f2fff9b7850f5c",
   "lastOpenFiles": [
+    "Interview2026.md",
+    "Typescript.md",
     "20261102203359613.png",
     "20261102203339407.png",
     "20261102203305843.png",
     "20261102203014491.png",
     "InterviewQuestion.md",
-    "Interview2026.md",
     "InterviewQuestion.md~RF1b3e17cc.TMP",
     "InterviewQuestion.md~RF1b3db48e.TMP",
     "Blog.md",
@@ -295,7 +297,6 @@
     "20260920102838826.png",
     "20260920091923132.png",
     "20260920091846984.png",
-    "20260920090945261.png",
     "Vue3.md",
     "React文档笔记.md",
     "面试.md",
@@ -304,7 +305,6 @@
     "React视频笔记.md",
     "NodeJs.md",
     "微信小程序.md",
-    "计算机网络.md",
-    "Typescript.md"
+    "计算机网络.md"
   ]
 }
