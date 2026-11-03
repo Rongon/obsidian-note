@@ -57,7 +57,7 @@ const setCount = () => {
 
 ​	语法不同：
 
-```vue
+```js
 import { computed } from 'vue'
 const computedList = computed( () => {
 	xxx
@@ -80,7 +80,7 @@ const computedList = computed( () => {
 
 1. 单个数据
 
-```
+```js
 import xxx
 watch(count, (newValue, oldValue) => {
 	log(${newValue}, ${oldValue})
@@ -89,7 +89,7 @@ watch(count, (newValue, oldValue) => {
 
 2. 多个数据
 
-```
+```js
 import xxx
 watch([ref1, ref2], (newArr, oldArr) => {
 	log(${newArr}, ${oldArr})
@@ -98,7 +98,7 @@ watch([ref1, ref2], (newArr, oldArr) => {
 
 3. immediate 立即执行
 
-```
+```js
 import xxx
 watch(count, (newValue, oldValue) => {
 	log(${newValue}, ${oldValue})
@@ -109,7 +109,7 @@ watch(count, (newValue, oldValue) => {
 
 4. deep深度监视(复杂类型、对象)
 
-```
+```js
 watch(userInfo, (newValue) => {
 	log(newValue)
 },{
@@ -119,7 +119,7 @@ watch(userInfo, (newValue) => {
 
 5. deep精确监视(固定写法)
 
-```
+```js
 watch(() => userInfo.value.age, (newValue, oldValue) => {
 	log(xxx)
 })
