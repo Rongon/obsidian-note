@@ -269,12 +269,14 @@
       "templates:插入模板": false,
       "command-palette:打开命令面板": false,
       "bases:新建数据库": false,
-      "obsidian-git:Open Git source control": false
+      "obsidian-git:Open Git source control": false,
+      "charted-roots:Open Charted Roots control center": false
     }
   },
   "active": "36f0731c82763f1b",
   "lastOpenFiles": [
     "InterviewQuestion.md",
+    "file:D:/Commun/Note/中国共产党简史笔记.md",
     "Interview2026.md",
     "Typescript.md",
     "20261102203359613.png",
