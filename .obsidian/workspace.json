@@ -77,7 +77,8 @@
               "title": "中国共产党简史笔记"
             }
           }
-        ]
+        ],
+        "currentTab": 3
       }
     ],
     "direction": "vertical"
@@ -141,7 +142,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Interview2026.md",
+                "file": "InterviewQuestion.md",
                 "followCursor": false,
                 "showSearch": true,
                 "searchQuery": ""
@@ -258,15 +259,15 @@
       "charted-roots:Open Charted Roots control center": false
     }
   },
-  "active": "c8962521f7c6699a",
+  "active": "f6f2fff9b7850f5c",
   "lastOpenFiles": [
+    "file:D:/Commun/Note/中国共产党简史笔记.md",
     "InterviewQuestion.md",
+    "Interview2026.md",
     "WorkExperience.md",
     "Blog.md",
-    "Interview2026.md",
     "InterviewQuestion.md~RF61380bd.TMP",
     "InterviewQuestion.md~RF61362a6.TMP",
-    "file:D:/Commun/Note/中国共产党简史笔记.md",
     "Vue3.md",
     "20261103175032211.png",
     "20261103174405695.png",

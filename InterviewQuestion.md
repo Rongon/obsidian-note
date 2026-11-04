@@ -333,6 +333,7 @@ Zustand 没有 Provider、没有样板代码，`create` 出来就是一个 hook�
 
 我的习惯：对外暴露的对象形状用 `interface`，联合/工具类型用 `type`。
 
+---
 #### ⭐ 27. `any`、`unknown`、`never` 的区别？
 
 - `any`：放弃检查，能读能写能调用。
@@ -341,6 +342,7 @@ Zustand 没有 Provider、没有样板代码，`create` 出来就是一个 hook�
 
 我项目里卡错误码用联合类型 + `never` 兜底：新增错误码忘了处理，编译期就报错。
 
+---
 #### 28. 类型收窄有哪些手段？
 
 `typeof`、`instanceof`、`in`、字面量相等判断、自定义类型守卫 `x is T`、可辨识联合（`kind` 字段）、`as const`。
