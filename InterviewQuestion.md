@@ -291,12 +291,14 @@ Vue 把同一轮里的多次数据变更攒起来，在微任务里统一更新 
 
 修法：**统一为提交时从表单实例取一次快照**，并给缓存加"表单版本号"，切换表单时版本号变、旧缓存自动失效。
 
+---
 #### 21. React 18 的并发特性有哪些？你用到哪个？
 
 `createRoot` + 自动批量更新、`startTransition`/`useTransition`（把非紧急更新降级）、`useDeferredValue`、`Suspense`。
 
 表格搜索这种"输入框立即响应、结果列表可以慢一拍"的场景，适合 `useDeferredValue` 或 `useTransition`。
 
+---
 #### 22. antd 的 `Table` 为什么会慢？怎么优化？
 
 慢的原因：每行都渲染组件、每列都重新生成 `columns` 对象、`rowKey` 不稳导致全量 diff、滚动时整表重渲染。
@@ -311,10 +313,12 @@ Vue 把同一轮里的多次数据变更攒起来，在微任务里统一更新 
 
 三者要一起用才生效：`memo` 组件的 props 里有新函数，等于没缓存。
 
+---
 #### 24. `Zustand` 和 `Redux` 的区别？
 
 Zustand 没有 Provider、没有样板代码，`create` 出来就是一个 hook，按需订阅（只订阅用到的字段才重渲染）。Redux 有严格单向流和中间件生态，适合大团队约定。
 
+---
 #### 25. React 的 `key` 和 Vue 的 `key` 是同一个作用吗？
 
 是同一个作用：diff 时判断节点身份。React 里同样不能随便用 index。
