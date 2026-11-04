@@ -4545,6 +4545,145 @@ QUIC 跑在 **UDP** 上，把可靠传输、流控、多路复用全放到用户
 一句话：Network 面板里每一行都能拆成这五段，先定位再优化。
 
 ---
+# 浏览器与性能
+
+> 这一章是从**你的简历反推**出来的：项目区块第 1 条就是性能优化，面试官一定会顺着它往下问「你怎么衡量的」「指标是什么」。答不出 LCP / CLS / INP，前面那串数字就白写了。
+
+### 从拿到 HTML 到看见第一帧，浏览器做了哪几步？
+
+1. **解析 HTML → DOM 树**（遇到 `<script>` 会阻塞解析，除非 `defer` / `async`）。
+2. **解析 CSS → CSSOM**（CSS 是阻塞渲染的，所以关键样式要内联或预加载）。
+3. **DOM + CSSOM → 渲染树**（只包含可见节点，`display:none` 的不会进来）。
+4. **布局（Layout / Reflow）**：算出每个盒子的位置和大小。
+5. **分层 → 绘制（Paint）**：把每个层画成位图。
+6. **合成（Composite）**：GPU 把各层拼成一帧。
+
+能跳过的步骤决定了优化手段：只改 `transform` / `opacity` 可以停在**合成**这一步，不触发布局和重绘 —— 这就是动画要用它们的原因。
+
+### 重排（Reflow）和重绘（Repaint）有什么区别？怎么减少？
+
+- **重排**：几何属性变了（宽高、位置、字体大小、增删节点）→ 要重新算布局 → 代价最大。
+- **重绘**：只有颜色/背景/阴影变了 → 布局没变，只重画 → 比重排便宜。
+
+减少手段：① 批量改样式（改 `class` 而不是逐条改 `style`）；② **读写分离**，别在循环里「读 `offsetHeight` → 写 → 再读」，那会强制同步布局（layout thrashing）；③ 动画用 `transform` / `opacity`，必要时 `will-change`（但会多占内存，别滥用）；④ 离屏节点先 `display:none` 或 `DocumentFragment` 一次性插入；⑤ 长列表用虚拟滚动而不是堆 DOM。
+
+### LCP、CLS、INP 分别量什么？怎么优化？
+
+| 指标 | 量什么 | 优化手段 |
+| --- | --- | --- |
+| **LCP** | 视口内最大元素出现的时间 | 图片：`srcset` + `sizes` 选合适尺寸、`preload`、`fetchpriority="high"`、别用懒加载首屏图；字体：`font-display: swap`；HTML 层面减少阻塞 |
+| **CLS** | 布局意外偏移的总和 | 图片/iframe 写死宽高；广告位和骨架屏预留空间；字体切换时用 `size-adjust`；别在已有内容上方插入元素 |
+| **INP** | 用户交互到下一帧响应的延迟 | 拆长任务（`setTimeout` / `requestIdleCallback` / `isInputPending`）；减少同步大计算；事件处理里先给视觉反馈再干活 |
+
+口径提醒：LCP 分四段——TTFB、资源加载延迟、资源加载时长、元素渲染延迟。**先看是哪一段慢**，再决定优化什么；不分段就谈优化，是碰运气。
+
+### 页面卡顿怎么定位？
+
+打开 Performance 录制，看**主线程**那条：单个任务超过 **50ms** 就是长任务，火焰图上是一根很长的黄条。往下看是谁占的：JS 执行、样式计算、布局还是绘制。再对症：JS 拆任务、布局合并读写、绘制降级别的层。配合 `PerformanceObserver` 可以在线上采 `longtask` 和 Web Vitals，而不是只在本地测。
+
+# CSS
+
+### BFC 是什么？能解决哪几个问题？
+
+BFC（块级格式化上下文）是一个**独立的布局区域**，里面的元素怎么排都不影响外面。
+
+触发方式（常用）：`overflow` 非 `visible`、`display: flow-root`（最干净）、`display: flex/inline-flex/grid` 的子项、`position: absolute/fixed`、`float` 非 `none`。
+
+能解决的四个典型问题：① 子元素 `margin` 和父元素塌陷（加 `flow-root` 隔离）；② 浮动导致父元素高度塌陷（BFC 会包住浮动）；③ 两栏布局时右侧不环绕浮动元素（右侧自己成 BFC）；④ 防止相邻兄弟 `margin` 合并（各自成 BFC）。
+
+### 层叠上下文是什么？为什么 `z-index` 有时不生效？
+
+层叠上下文是**一个独立的叠放层级组**，组内的 `z-index` 只跟同组兄弟比，永远压不过父级组外面的元素。
+
+触发：`position` 非 `static` 且有 `z-index` 不是 `auto`、`opacity < 1`、`transform` / `filter` / `perspective` 非 `none`、`will-change` 指定这些属性、`isolation: isolate`、`flex`/`grid` 子项带 `z-index`。
+
+所以「`z-index: 9999` 还是不显示」的经典原因是：它被一个**带 `transform` 的祖先**圈进了新上下文，外面有个 `z-index: 2` 的兄弟挡住了整组。修法是把要盖住的元素提到同一个上下文里，或者调整祖先的层级。
+
+### `flex` 和 `grid` 怎么选？`flex: 1` 到底是什么？
+
+- **flex**：一维（一行或一列），擅长「按内容伸缩、对齐、间距」。导航、按钮组、卡片内部排版都用它。
+- **grid**：二维（行和列同时定义），擅长「整页分栏、卡片网格」。不需要在子元素上写宽度，`grid-template-columns: repeat(3, 1fr)` 一行搞定。
+
+`flex: 1` 是 `flex-grow: 1; flex-shrink: 1; flex-basis: 0%` 的简写 —— 关键词是 `basis: 0`：**忽略内容原始宽度，按剩余空间均分**。所以两个内容长短不一的 `flex: 1` 元素宽度却相等；如果用 `flex: auto`（`basis: auto`），就会按内容分。
+
+# 工程化与构建
+
+### Vite 为什么比 Webpack 快？
+
+分两段看，别混为一谈：
+
+- **开发阶段**：Webpack 要先把整个依赖图打包成 bundle 再启动 dev server，项目越大启动越慢；Vite **不打包**，直接用浏览器原生 ESM 让浏览器去请求模块，只在第一次遇到裸模块（`import vue from 'vue'`）时用 **esbuild 预构建**成单个文件（顺带把 CJS 转成 ESM、合并成少数请求）。HMR 也是按模块失效，改一个文件只重载那条链。
+- **生产构建**：Vite 用 **Rollup**（新版本可选 Rolldown），不是 esbuild —— 因为生产要的是更小的产物和更好的 tree-shaking，而 esbuild 当时的代码分割/压缩策略不够成熟。
+
+一句话答法：**「Vite 快在开发态不打包 + esbuild 预构建，生产态还是打包的，只是换了 Rollup。」** 说成「Vite 打包比 Webpack 快」就错了。
+
+### tree-shaking 生效要满足什么条件？
+
+本质是**静态分析出「导入但没用」的代码并删掉**，所以前提是模块结构能被静态分析：
+
+1. 用 **ESM**（`import`/`export`）。CJS 的 `require` 是运行时求值，分析不了。
+2. 生产模式（`mode: production`），dev 下为了调试不摇。
+3. 包的 `package.json` 里 `sideEffects: false` 或标出有副作用的文件 —— 否则打包器不敢删（怕删掉「引入即执行」的代码）。
+4. 避免 `import * as X from '...'` 这种全量引入，按名字导入。
+
+### 「按需引入」和「代码分割」是一回事吗？
+
+不是。**按需引入**解决的是「一个包只用了一部分，别全打进来」——组件级，比如 Element Plus 只用 5 个组件就别引全量；**代码分割**解决的是「先别加载，用到再加载」——chunk 级，比如路由懒加载。
+
+两个都要做，收益不重叠：按需引入减的是**单个 chunk 的体积**，代码分割减的是**首屏要下载的 chunk 数量**。
+
+按需引入的坑：组件按需了、**样式没按需**（要么配 `unplugin-vue-components` 自动引样式，要么手动引 `style/css`）；另外组件库的 CSS 变量主题要单独覆盖，别指望按需引入自动处理。
+
+### 前端怎么做错误监控和上报？
+
+三处要抓：`window.onerror`（同步运行时错误）、`unhandledrejection`（未处理的 Promise 异常）、资源加载失败（在 `window` 上用 `addEventListener('error', fn, true)` 捕获阶段拿到 `img`/`script` 的失败）。
+
+上报要点：① 采样（不然量大且贵）；② 带 `sourcemap` 映射回源码行（sourcemap 不上传到 CDN，只给监控平台）；③ 做聚合去重（同一个错误按 stack 指纹合并）；④ 敏感信息脱敏。
+
+诚实边界：本站没有做线上监控，只做了 Lighthouse + CI 校验；被问到就说「机制了解，线上没接」。
+
+# 安全与存储
+
+### XSS 有哪几种？怎么防？
+
+- **存储型**：恶意脚本被存进数据库（评论区、昵称），别人一打开就执行 —— 危害最大。
+- **反射型**：脚本藏在 URL 参数里，服务端原样拼回 HTML。
+- **DOM 型**：前端自己把不可信内容塞进 `innerHTML`，不经过服务端。
+
+防御分三层：① **输出转义**（默认就该是文本，框架的 `{{ }}` / JSX 已经转义）；② **避免危险 API**：`innerHTML` / `v-html` / `dangerouslySetInnerHTML` 只在内容可信时用，必须用时先过一遍白名单净化（DOMPurify）；③ **CSP** 作为兜底，禁掉内联脚本和外部未知域；④ 会话 cookie 加 `HttpOnly`，脚本偷不到。
+
+### CSRF 怎么防？
+
+攻击前提是「浏览器会自动带上 cookie」。所以防线都围绕「证明这个请求是你自愿发的」：
+
+1. **CSRF Token**：服务端下发随机 token，前端放在请求头/表单里，跨站拿不到。
+2. **SameSite Cookie**：`Lax` / `Strict` 让跨站请求带不上 cookie（见网络章的补充题）。
+3. **校验 `Origin` / `Referer`**：简单粗暴，挡掉大部分。
+4. **双提交 Cookie**：cookie 里一份、请求头里一份，服务端比对。
+
+顺带区分：**XSS 是「在别人的页面里执行我的脚本」，CSRF 是「借用户的身份发我的请求」** —— XSS 能直接读页面，CSRF 读不到响应，只能触发动作。
+
+### Cookie、localStorage、sessionStorage、IndexedDB 怎么选？
+
+| | Cookie | localStorage | sessionStorage | IndexedDB |
+| --- | --- | --- | --- | --- |
+| 容量 | ~4KB | ~5MB | ~5MB | 几百 MB 起 |
+| 生命周期 | 可设过期时间 | 永久（手动清） | 关标签页即清 | 永久（手动清） |
+| 随请求发送 | **会**（同源请求自动带） | 不会 | 不会 | 不会 |
+| 读写 | 同步 | 同步（会阻塞主线程） | 同步 | **异步**（事务） |
+| 存什么 | 会话标识、少量状态 | 主题、草稿、轻量配置 | 单次流程的临时状态 | 大量结构化数据、离线缓存 |
+
+选型口诀：**要跟服务端自动走的放 Cookie（且 `HttpOnly`）；轻量、纯前端的放 localStorage；只在本标签页有效的放 sessionStorage；大对象或需要索引查询的放 IndexedDB。**
+
+### 两个标签页之间怎么通信？
+
+1. **`storage` 事件**：A 页写 `localStorage`，B 页收到 `storage` 事件（注意：**同页面自己改自己不会触发**）。最简单，够用。
+2. **`BroadcastChannel`**：同源标签页之间广播消息，API 干净，现代浏览器都支持。
+3. **`SharedWorker`**：多页面共享一个 worker，适合需要集中管理的场景。
+4. **`window.postMessage`**：要拿到对方窗口引用（`window.open` / `iframe`），可跨源但必须校验 `origin`。
+
+真实用途：登录态同步（一个标签页登录/登出，其他标签页跟着变）、主题切换、防止重复提交。本站登录态用 Supabase 的 session 存 localStorage，刷新靠 SDK 恢复 —— 没做多标签页同步，这是个已知边界。
+
 # 链接知识
 
 ## **①函数柯里化**
