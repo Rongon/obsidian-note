@@ -64,7 +64,7 @@
             }
           }
         ],
-        "currentTab": 1
+        "currentTab": 2
       }
     ],
     "direction": "vertical"
@@ -128,7 +128,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Blog.md",
+                "file": "WorkExperience.md",
                 "followCursor": false,
                 "showSearch": true,
                 "searchQuery": ""
@@ -245,13 +245,13 @@
       "charted-roots:Open Charted Roots control center": false
     }
   },
-  "active": "c55d575e5b0772a5",
+  "active": "b4a73bf02849b5be",
   "lastOpenFiles": [
+    "Blog.md",
     "Interview2026.md",
     "_dedupe_blog.py",
     "_bak_before_redo.md",
     "_redo.py",
-    "Blog.md",
     "_archive/InterviewQuestion-2026-11-04.md",
     "_archive",
     "_o.md",
