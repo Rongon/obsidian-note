@@ -63,7 +63,8 @@
               "title": "中国共产党简史笔记"
             }
           }
-        ]
+        ],
+        "currentTab": 2
       }
     ],
     "direction": "vertical"
@@ -127,7 +128,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Interview2026.md",
+                "file": "WorkExperience.md",
                 "followCursor": false,
                 "showSearch": true,
                 "searchQuery": ""
@@ -244,13 +245,13 @@
       "charted-roots:Open Charted Roots control center": false
     }
   },
-  "active": "c8962521f7c6699a",
+  "active": "b4a73bf02849b5be",
   "lastOpenFiles": [
+    "Blog.md",
+    "WorkExperience.md",
+    "Interview2026.md",
     "_bak2.md",
     "_add_chapters.py",
-    "WorkExperience.md",
-    "Blog.md",
-    "Interview2026.md",
     "_dedupe_blog.py",
     "_bak_before_redo.md",
     "_redo.py",
