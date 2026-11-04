@@ -78,7 +78,7 @@
             }
           }
         ],
-        "currentTab": 4
+        "currentTab": 3
       }
     ],
     "direction": "vertical"
@@ -142,7 +142,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "file:D:/Commun/Note/中国共产党简史笔记.md",
+                "file": "InterviewQuestion.md",
                 "followCursor": false,
                 "showSearch": true,
                 "searchQuery": ""
@@ -259,8 +259,11 @@
       "charted-roots:Open Charted Roots control center": false
     }
   },
-  "active": "36f0731c82763f1b",
+  "active": "f6f2fff9b7850f5c",
   "lastOpenFiles": [
+    "InterviewQuestion.md~RF61380bd.TMP",
+    "InterviewQuestion.md~RF61362a6.TMP",
+    "file:D:/Commun/Note/中国共产党简史笔记.md",
     "InterviewQuestion.md",
     "WorkExperience.md",
     "Interview2026.md",
@@ -273,7 +276,6 @@
     "20261103174232858.png",
     "20261103174152136.png",
     "Typescript.md",
-    "file:D:/Commun/Note/中国共产党简史笔记.md",
     "20261102203359613.png",
     "20261102203339407.png",
     "20261102203305843.png",
@@ -295,7 +297,6 @@
     "tmp-doc-rename.mjs",
     "Program2026-知识点.md",
     "Program2026.md~RF54309eb.TMP",
-    "Program2026.md~RF51d15ab.TMP",
     "SKILLS.md",
     "Vite.md",
     "ComputerNetwork.md",
