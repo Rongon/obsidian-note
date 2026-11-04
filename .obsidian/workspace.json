@@ -78,7 +78,7 @@
             }
           }
         ],
-        "currentTab": 3
+        "currentTab": 4
       }
     ],
     "direction": "vertical"
@@ -142,7 +142,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "InterviewQuestion.md",
+                "file": "file:D:/Commun/Note/中国共产党简史笔记.md",
                 "followCursor": false,
                 "showSearch": true,
                 "searchQuery": ""
@@ -259,10 +259,10 @@
       "charted-roots:Open Charted Roots control center": false
     }
   },
-  "active": "f6f2fff9b7850f5c",
+  "active": "36f0731c82763f1b",
   "lastOpenFiles": [
-    "WorkExperience.md",
     "InterviewQuestion.md",
+    "WorkExperience.md",
     "Interview2026.md",
     "Blog.md",
     "Vue3.md",
