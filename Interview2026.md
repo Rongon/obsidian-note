@@ -46,14 +46,14 @@ console.log({} instanceof Object);                   // true
 ```js
 var a = Object.prototype.toString;
  
-console.log(a.call(2));
-console.log(a.call(true));
-console.log(a.call('str'));
-console.log(a.call([]));
-console.log(a.call(function(){}));
-console.log(a.call({}));
-console.log(a.call(undefined));
-console.log(a.call(null));
+console.log(a.call(2));             //[object Number]
+console.log(a.call(true));          //[object Boolean]
+console.log(a.call('str'));         //[object String]
+console.log(a.call([]));            //[object Array]
+console.log(a.call(function(){}));  //[object Function]
+console.log(a.call({}));            //[object Object]
+console.log(a.call(undefined));     //[object Undefined]
+console.log(a.call(null));          //[object Null]
 ```
 
 4. `Array.isArray()`（专门判断数组）
