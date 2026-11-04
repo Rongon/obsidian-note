@@ -63,7 +63,8 @@
               "title": "中国共产党简史笔记"
             }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -127,7 +128,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Interview2026.md",
+                "file": "Blog.md",
                 "followCursor": false,
                 "showSearch": true,
                 "searchQuery": ""
@@ -244,8 +245,13 @@
       "charted-roots:Open Charted Roots control center": false
     }
   },
-  "active": "c8962521f7c6699a",
+  "active": "c55d575e5b0772a5",
   "lastOpenFiles": [
+    "Interview2026.md",
+    "_dedupe_blog.py",
+    "_bak_before_redo.md",
+    "_redo.py",
+    "Blog.md",
     "_archive/InterviewQuestion-2026-11-04.md",
     "_archive",
     "_o.md",
@@ -258,11 +264,8 @@
     "Blog.md~RF66f549d.TMP",
     "InterviewQuestion.md",
     "file:D:/Commun/Note/中国共产党简史笔记.md",
-    "Interview2026.md",
     "WorkExperience.md",
-    "Blog.md",
     "InterviewQuestion.md~RF61380bd.TMP",
-    "InterviewQuestion.md~RF61362a6.TMP",
     "Vue3.md",
     "20261103175032211.png",
     "20261103174405695.png",
@@ -275,7 +278,6 @@
     "20261102203339407.png",
     "20261102203305843.png",
     "20261102203014491.png",
-    "InterviewQuestion.md~RF1b3e17cc.TMP",
     "Pnpm.md",
     "AI.md",
     "PLUGINS.md",
@@ -290,8 +292,6 @@
     "项目知识点重难点讲解.md",
     "React文档笔记.md",
     "面试.md",
-    "VueRouter.md",
-    "未命名.canvas",
-    "React视频笔记.md"
+    "未命名.canvas"
   ]
 }

@@ -984,60 +984,29 @@ function App() {
 export default App
 ```
 ---
-### **补充 · 闭包什么情况下会造成内存泄漏？怎么排查**
 
-闭包本身不是泄漏，**闭包 + 长生命周期引用**才是。典型三种：
+### **补充 · ES Module 和 CommonJS 有什么区别？**
 
-1. 事件监听里捕获了大对象（DOM 节点、整份列表数据），监听没解绑。
-2. 定时器 / `setInterval` 的回调持有外部变量，定时器没清。
-3. 全局缓存（Map / 数组）只增不减，key 还是对象引用。
+| | CommonJS（`require`） | ES Module（`import`） |
+| --- | --- | --- |
+| 加载时机 | 运行时，同步 | 编译时，静态分析 |
+| 值 | 导出的是**值的拷贝**（改原变量不影响已导出） | 导出的是**引用**（活的绑定） |
+| 位置 | 可以写在 `if` 里 | 只能顶层，不能条件加载（`import()` 除外） |
+| `this` | 指向 `module.exports` | 顶层 `this` 是 `undefined` |
+| tree shaking | 做不到（要到运行才知道用什么） | 能做到（静态结构） |
 
-排查：DevTools → Memory → 拍两张 heap snapshot，比较「增量最大的构造函数」，看 retainers 链是不是指向那个闭包；或者用 Performance monitor 看 JS heap 是否单调上升。**判据**：对象本该在 GC 后回收，但有活着的引用链到它。
+工程影响：Node 现在两者都支持（`.mjs` / `type: module`）；浏览器只认 ESM；打包器能把 ESM 摇树优化，CJS 基本只能整体打包。
 
-### **补充 · `var` / `let` / `const` 的区别，暂时性死区是什么**
+---
+### **补充 · 垃圾回收是怎么回事？什么情况才算内存泄漏？**
 
-- `var`：函数作用域、变量提升（提升为 `undefined`）、可重复声明、全局时挂到 `window`。
-- `let` / `const`：块级作用域、也提升但**不初始化**，声明之前访问抛 `ReferenceError` —— 这段「已提升但不可访问」的区间就是**暂时性死区（TDZ）**。
-- `const` 只锁绑定不锁内容：`const a = []` 仍可 `a.push()`。
+V8 用**分代回收**：新对象进新生代（Scavenge，复制存活对象，快但频繁），活过两轮进老生代（标记-清除 + 标记-整理，慢但少跑）。判活的标准是「从 GC Roots（全局对象、调用栈上的变量、闭包环境）出发能不能找到它」，找不到就回收。
 
-被追问「为什么要 TDZ」：它把「用了还没声明的变量」从静默拿到 `undefined` 变成明确报错；`typeof` 在 TDZ 里也会抛，不再能安全探测。
+所以**内存泄漏的定义**是「对象已经没用了，但仍有活的引用链能到它」—— GC 看不到「没用」，只看「有没有引用」。前端最常见的三种：没解绑的事件监听、没清的定时器、只增不减的缓存（Map 存了 DOM 或大数组）。
 
-### **补充 · 深拷贝怎么做？`structuredClone` 有什么边界**
+排查手段：DevTools Memory 拍两次堆快照比增量、Performance monitor 看 JS heap 是否只涨不落、`querySelectorAll` 数 DOM 节点是否持续增长。
 
-- `JSON.parse(JSON.stringify(x))`：丢 `undefined` / 函数 / Symbol，`Date` 变字符串，`NaN` / `Infinity` 变 `null`，循环引用直接抛。
-- `structuredClone(x)`：原生，支持 `Date` / `Map` / `Set` / `ArrayBuffer` / 循环引用；**不支持**函数、DOM 节点、`Symbol`，自定义类实例会退化成普通对象（原型丢失）。
-- 手写递归：要处理循环引用（`WeakMap`）、原型（`Object.create(Object.getPrototypeOf(x))`）、不可枚举属性。
-
-工程结论：能不用深拷贝就别用，改成不可变更新；必须拷贝时优先 `structuredClone`，涉及函数或类实例就手写。
-
-### **补充 · 怎么限制 Promise 并发数（100 个请求只同时发 5 个）**
-
-核心是「跑满 5 个、完成一个补一个」的池子：
-
-```js
-async function pool(tasks, limit) {
-  const results = new Array(tasks.length)
-  let i = 0
-  const worker = async () => {
-    while (i < tasks.length) {
-      const cur = i++
-      results[cur] = await tasks[cur]()
-    }
-  }
-  await Promise.all(Array.from({ length: Math.min(limit, tasks.length) }, worker))
-  return results
-}
-```
-
-要点：JS 单线程里 `i++` 是原子的，不用锁；`worker` 个数就是并发上限；任何一个任务 reject 会让 `Promise.all` 整体失败，要「失败不中断」就在 `worker` 里 `try/catch` 把错误写进 `results`。
-
-### **补充 · 防抖和节流的区别，各自用在哪**
-
-- **防抖**：停止触发 N 毫秒后才执行（连续触发只执行最后一次）。用于搜索输入、resize 后重算、表单异步校验。
-- **节流**：每 N 毫秒最多执行一次（固定频率）。用于滚动位置计算、`mousemove`、按钮防连点。
-
-追问「防抖会不会丢最后一次」：`trailing` 版不丢；但手动 `setTimeout` 一定要在组件卸载时 `clearTimeout`，否则回调持有闭包造成泄漏。另一种是「立即执行版」（`leading: true`），用于「第一次点击必须立刻有反馈」。
-
+---
 # ts
 
 ## 经典面试题
@@ -1638,41 +1607,32 @@ declare module 'math-utils' {
     
 - **逐步完善**：可以先用简写 `any`，再逐步补全类型。
 ---
-### **补充 · TS 的类型收窄（narrowing）有哪些手段**
+
+### **补充 · 类型收窄（narrowing）有哪些手段？**
 
 - `typeof x === 'string'`、`Array.isArray(x)`、`x instanceof Date`。
 - `'a' in x`：按属性存在收窄。
-- **判别联合**：`if (x.kind === 'ok')` —— 最常用，靠一个公共字段收窄整个联合类型。
+- **判别联合**：`if (x.kind === 'ok')` —— 最常用，靠公共字段收窄整个联合类型。
 - 自定义类型守卫：`function isUser(x: unknown): x is User`。
 - 断言函数：`function assertUser(x: unknown): asserts x is User`。
-- 空值收窄：`x != null` 能同时摘掉 `null | undefined`。
+- 空值收窄：`x != null` 能同时摘掉 `null` 和 `undefined`。
 
-被追问「`as` 算不算收窄」：不算。`as` 是骗编译器，运行时不校验；收窄是编译器自己推出来的。能收窄就别 `as`。
+追问「`as` 算不算收窄」：不算。`as` 是骗编译器，运行时不校验；收窄是编译器自己推出来的结论。
 
-### **补充 · `satisfies` 是干什么的**
+---
+### **补充 · `satisfies` 是干什么的？和类型标注有什么区别？**
 
 `satisfies` 用来**校验形状但不改写推断结果**。
 
 ```ts
 const routes = { home: '/', posts: '/posts' } satisfies Record<string, string>
-// routes.home 的类型仍是 '/'（字面量），没被放宽成 string
+// routes.home 的类型仍是 '/'（字面量）
 ```
 
-对比 `: Record<string, string>` 标注：标注会把每个值放宽成 `string`，字面量信息就丢了。所以 `satisfies` 适合配置对象、路由表、主题 token 这类「我要保证形状对，但不想丢掉具体类型」的地方。
+换成 `: Record<string, string>` 标注，每个值会被放宽成 `string`，字面量信息就丢了。所以 `satisfies` 适合配置对象、路由表、主题 token——要保证形状对，又不想丢掉具体类型。
 
-### **补充 · 泛型的 `extends` 约束和默认值怎么写**
-
-```ts
-function pick<T extends object, K extends keyof T>(obj: T, keys: K[]): Pick<T, K>
-```
-
-- `T extends object`：保证 T 至少是对象，否则 `keyof T` 没意义。
-- `K extends keyof T`：key 只能是 T 自己的键，写错键名编译期就报。
-- 默认值：`function get<T = string>()`，调用不传就用默认类型。
-
-一句话：**泛型是「类型的参数」，`extends` 给这个参数加约束，`keyof` / `in` 让约束能引用另一个类型参数。**
-
-### **补充 · 为什么更推荐联合类型而不是 `enum`**
+---
+### **补充 · 为什么更推荐联合类型而不是 `enum`？**
 
 - `enum` 会**产出运行时代码**（一个对象），不是纯类型；`const enum` 虽能消掉产物，但要 `isolatedModules` 配合、且不能跨包。
 - 数字 `enum` 有反向映射（`Status[0] === 'Active'`），序列化和日志里凭空多一层。
@@ -1683,17 +1643,9 @@ type Status = 'active' | 'disabled'
 function assertNever(x: never): never { throw new Error(String(x)) }
 ```
 
-补一句：团队已经在用 `enum` 就别为了风格重构，成本不划算。
+补一句：团队已经在用 `enum` 就别为风格重构，成本不划算。
 
-### **补充 · `.d.ts` 声明文件和模块增强怎么用**
-
-- 有类型的库：直接 `import`，不用写声明。
-- 无类型的库：`declare module 'xxx' { ... }` 描述它的形状。
-- 扩展别人的类型（模块增强）：`declare module 'vue' { interface ComponentCustomProperties { $api: Api } }`。
-- 全局变量：`declare global { interface Window { dataLayer: unknown[] } }`，文件里必须先有 `export {}` 才算模块。
-
-判断标准：**声明文件只描述「运行时已经存在的东西」**，它不产生实现，写错了运行时照样炸。
-
+---
 # vue
 ## 经典面试题
 
@@ -2770,29 +2722,15 @@ export const useUserStore = defineStore('user', {
 })
 ```
 ---
-### **补充 · `ref` 和 `reactive` 怎么选？为什么 `reactive` 解构会丢响应**
 
-- `ref` 能包任意类型（含基本类型），模板里自动解包，赋值走 `.value`；`reactive` 只能包对象，属性直接访问。
-- **解构丢响应的原因**：解构拿到的是一次求值的结果（`const { count } = state` 得到的是普通数字），不是代理上的属性访问，后续更新自然不触发。
-- 两种保命写法：`const { count } = toRefs(state)`，或者整个对象用 `ref` 存。
+### **补充 · `nextTick` 为什么需要？**
 
-工程结论：**默认用 `ref`**（约定统一、不踩解构坑），只有「整个表单对象要整体传递」时才用 `reactive`。
+Vue 的 DOM 更新是**异步批量**的：改完响应式数据不会立刻重渲染，而是把更新推到微任务队列，同一轮多次修改只渲染一次。所以改完数据立刻读 DOM，拿到的还是旧的 —— `await nextTick()` 等这一轮刷完。
 
-### **补充 · `computed` / `watch` / `watchEffect` 有什么区别**
+典型场景：`v-if` 切换后要拿新元素引用、`el.scrollIntoView()`、图表要在容器有尺寸之后初始化。
 
-- `computed`：有缓存，依赖不变不重算，**必须返回值**，用于派生数据。
-- `watch`：显式声明依赖，能拿到新旧值，适合「依赖变了要做事」（发请求、写 localStorage、操作 DOM）。
-- `watchEffect`：自动收集依赖、立即执行一次，适合「一上来就跑、逻辑里自己读依赖」；缺点是依赖不直观。
-
-三个坑：① `watch` 监听 `reactive` 对象默认是浅的，要 `{ deep: true }`；② `watch` 要 `{ immediate: true }` 才等价 `watchEffect` 的立即执行；③ `computed` 里不能做副作用（发请求、改状态），它应该随时可重算。
-
-### **补充 · `nextTick` 为什么需要**
-
-Vue 的 DOM 更新是**异步批量**的：改完响应式数据不会立刻重渲染，而是把更新推到微任务队列，同一轮多次修改只渲染一次。所以改完数据立刻读 DOM 拿到的还是旧的 —— `await nextTick()` 就是等这一轮刷完。
-
-其它典型场景：`v-if` 切换后要拿新元素引用、`el.scrollIntoView()`、图表要在容器有尺寸之后初始化。
-
-### **补充 · 组件上的 `v-model` 是怎么实现的**
+---
+### **补充 · 组件上的 `v-model` 是怎么实现的？**
 
 本质是「一个 prop + 一个事件」的语法糖：
 
@@ -2801,18 +2739,19 @@ Vue 的 DOM 更新是**异步批量**的：改完响应式数据不会立刻重�
 <MyInput :modelValue="text" @update:modelValue="text = $event" />
 ```
 
-子组件 `defineProps({ modelValue: String })` + `emit('update:modelValue', v)`；Vue 3.4+ 可以 `const model = defineModel()`。多个绑定写 `v-model:title`，对应 prop 名就是 `title`。与 Vue 2 的 `.sync` 的区别：Vue 3 统一成了 `v-model` 的参数形式。
+子组件 `defineProps({ modelValue: String })` + `emit('update:modelValue', v)`；Vue 3.4+ 可以 `const model = defineModel()`。多个绑定写 `v-model:title`，对应 prop 名就是 `title`。与 Vue 2 `.sync` 的区别：Vue 3 统一成了 `v-model` 的参数形式。
 
-### **补充 · `keep-alive` 有什么用，`activated` / `deactivated` 何时触发**
+---
+### **补充 · Vue 3 的 diff 和 Vue 2 有什么区别？**
 
-`keep-alive` 缓存组件实例，切走再回来不重新创建、不重新请求，适合「列表 → 详情 → 返回」保住滚动位置和筛选条件。
+- **Vue 2**：双端对比，四个指针（旧头/旧尾/新头/新尾）两两比较，命中四种情况之一就复用；都没命中才建 key → index 映射表去查。
+- **Vue 3**：先「掐头去尾」把相同的前缀和后缀跳过，中间那段如果乱序，就求**最长递增子序列**，只有不在子序列里的节点需要移动 DOM。
 
-- `activated`：插入时触发（首次挂载 + 每次被激活）。
-- `deactivated`：移出但**没销毁**时触发。
-- `include` / `exclude` 按组件 `name` 过滤，`max` 限制缓存个数（LRU）。
+为什么 LIS 能少移动：`[A B C D]` → `[D A B C]`，按旧顺序找最长递增子序列是 `[A B C]`，只需把 `D` 移到最前面（1 次 DOM 移动），而不是 4 次。
 
-坑：缓存页面里 `onMounted` 只跑一次，所以「每次进来都要刷新」的逻辑必须放 `activated`。
+另外 Vue 3 在编译期做了静态提升、Patch Flag、Block Tree，能跳过大量不需要比较的节点——**「Vue 3 比 Vue 2 快」是这三条叠加的结果，不是 diff 算法单独变快了**。
 
+---
 # react
 ## 经典面试题
 ### **基础概念：**
@@ -4022,46 +3961,15 @@ export const { increment, add } = counterSlice.actions
 export const store = configureStore({ reducer: counterSlice.reducer })
 ```
 ---
-### **补充 · `useMemo` / `useCallback` 什么时候真的有用**
 
-它们解决的是「引用变化导致子组件重渲染」，不是「计算慢」。
+### **补充 · React 18 的自动批处理是什么？怎么强制同步一次更新？**
 
-- 有用：① 传给 `React.memo` 子组件的对象/函数；② 作为 `useEffect` 依赖（避免每次新引用导致 effect 反复跑）；③ 真的重计算（大数组 filter + sort，毫秒级以上）。
-- 没用：传给普通 DOM 元素的 `style={{}}`、`onClick={() => {}}`，包了也白包；依赖数组里全是新对象时同理。
+React 18 之前只有事件处理函数里的多次 `setState` 会合并；18 之后**所有**更新（`setTimeout`、`Promise`、原生事件回调里）都自动批处理，多次修改只渲染一次。
 
-结论句：**先测再优化**，用 Profiler 看谁在重渲染，别默认「加了 memo 就更快」—— 多一层比较有时比省下的渲染还贵。
+- 需要「立刻读到更新后的 DOM」时用 `flushSync(() => { ... })` 强制同步刷新（慎用，会破坏批处理、可能触发额外重排）。
+- 反过来想让某些更新降优先级，用 `startTransition`，典型场景是搜索联想列表。
 
-### **补充 · `useEffect` 里为什么会读到旧值？依赖数组和清理函数怎么写**
-
-`useEffect` 的回调在当次渲染的闭包里取值。若 effect 只在挂载时跑（依赖 `[]`），它内部读到的 state / props 全被**冻结在首次渲染**，定时器和订阅回调里永远是旧值。
-
-两种解法：① 把用到的值都放进依赖数组（代价是重建订阅）；② 用 `useRef` 存最新值，回调里读 `ref.current`。
-
-清理必须成对：`addEventListener` ↔ `removeEventListener`、`setInterval` ↔ `clearInterval`、订阅 ↔ 退订。依赖漏项就是 `exhaustive-deps` 警告，别手动关掉 lint。
-
-### **补充 · `key` 的作用是什么，为什么不要用数组 index**
-
-`key` 是 React 用来**判断「这一帧的节点还是不是上一帧那个」**的标识。相同 key 复用实例与 DOM，不同 key 销毁重建。
-
-用 `index` 的问题：头部插入或删除一项时，后面所有元素的 index 都变了，React 认为「每个元素都换了」，于是输入框内容、动画状态、`useState` 全部错位或重建。只有「只追加、从不增删」的列表才勉强安全。
-
-正确做法：业务唯一 id。没有 id 就该怀疑数据本身有问题；用 `Math.random()` 当 key 等于每帧重建。
-
-### **补充 · 受控组件和非受控组件怎么选**
-
-- 受控：值在 React state（`value` + `onChange`），能做即时校验、联动、禁用，代价是每次输入都渲染。
-- 非受控：值在 DOM 里（`defaultValue` + `ref`），适合大表单、文件输入、只在提交时取值的场景。
-- 混合最常见：`antd` 的 `Form` 就是受控包裹 + 内部实例，`getFieldsValue()` 一次取快照——我处理「保存值和界面不一致」用的就是这个。
-
-一句话：**需要边输边反应就受控，只需要最后一份值就非受控 / 实例。**
-
-### **补充 · React 18 的自动批处理是什么，怎么强制同步更新**
-
-React 18 之前只有事件处理函数里的多次 `setState` 会合并；18 之后**所有**更新（`setTimeout`、`Promise`、原生事件回调）都自动批处理，多改只渲染一次。
-
-- 需要「立刻读到更新后的 DOM」用 `flushSync(() => {...})`（慎用，会破坏批处理、可能触发额外重排）。
-- 想让非紧急更新降优先级用 `startTransition`，典型是搜索联想列表。
-
+---
 # 计算机网络
 ## 经典面试题
 ---
@@ -4598,15 +4506,17 @@ HTTP/2 允许给每个流设置优先级，让关键资源（如 CSS、首屏 JS
 
 标准组合：**HTML 必须验证 + 静态资源 hash 命名 + 一年 immutable**。发版只换 HTML，用户就能拿到全套新资源。
 
-### **补充 · CORS 预检什么时候发？简单请求的条件是什么**
+---
+### **补充 · CORS 的预检请求什么时候发？简单请求的条件是什么？**
 
-满足全部条件才是**简单请求**（不预检）：方法为 `GET` / `HEAD` / `POST`；头只允许 `Accept`、`Accept-Language`、`Content-Language`、`Content-Type`，且 `Content-Type` 只能是 `text/plain`、`multipart/form-data`、`application/x-www-form-urlencoded`。
+满足全部条件才是**简单请求**（不预检）：方法是 `GET` / `HEAD` / `POST`；头只允许 `Accept`、`Accept-Language`、`Content-Language`、`Content-Type`，且 `Content-Type` 只能是 `text/plain`、`multipart/form-data`、`application/x-www-form-urlencoded`。
 
-一旦有自定义头（如 `Authorization`）、`application/json`、或 `PUT` / `DELETE`，浏览器先发 `OPTIONS` 预检，服务端要用 `Access-Control-Allow-Headers` / `-Methods` 放行，可用 `Access-Control-Max-Age` 缓存预检结果。
+一旦出现自定义头（如 `Authorization`）、`application/json`、或 `PUT` / `DELETE`，浏览器先发 `OPTIONS` 预检，服务端要用 `Access-Control-Allow-Headers` / `-Methods` 放行，也可用 `Access-Control-Max-Age` 缓存预检结果。
 
-关键认知：**CORS 是浏览器的限制，不是服务器的**。请求其实发出去了，只是响应被浏览器拦下不给 JS 读。跨域带 Cookie 需要三件事同时满足：前端 `credentials: 'include'`、服务端 `Allow-Credentials: true`、`Allow-Origin` 不能是 `*`。
+关键认知：**CORS 是浏览器的限制，不是服务器的**。请求其实发出去了，只是响应被浏览器拦下不给 JS 读。跨域带 Cookie 要三件事同时满足：前端 `credentials: 'include'`、服务端 `Allow-Credentials: true`、`Allow-Origin` 不能是 `*`。
 
-### **补充 · Cookie 的 `SameSite` 三个值是干什么的**
+---
+### **补充 · Cookie 的 `SameSite` 三个值是干什么的？**
 
 - `Strict`：任何跨站请求都不带（最安全，但从外站进来会显示未登录）。
 - `Lax`（现代浏览器默认）：跨站的**顶级导航 GET** 会带，`POST`、`iframe`、`fetch` 不带。
@@ -4614,15 +4524,17 @@ HTTP/2 允许给每个流设置优先级，让关键资源（如 CSS、首屏 JS
 
 它防的是 CSRF：攻击者从别的站发起带 cookie 的请求，`Lax` / `Strict` 下这个 cookie 带不过去。配套：`HttpOnly` 防 XSS 偷读，`Secure` 防明文。
 
-### **补充 · HTTP/3 和 QUIC 解决了什么问题**
+---
+### **补充 · HTTP/3 和 QUIC 解决了什么问题？**
 
 HTTP/2 已经做了「一条连接上多路复用」，但它跑在 TCP 上，于是继承 TCP 的两个毛病：**队头阻塞**（丢一个包，后面的流全等重传）和**握手慢**（TCP 三次握手 + TLS 握手）。
 
-QUIC 跑在 **UDP** 上，把可靠传输、流控、多路复用全放到用户态：每条流独立重传（消除跨流队头阻塞），TLS 1.3 融进握手（首连 1 RTT，重连 0 RTT）。代价是 UDP 在部分网络被限速或拦截，所以现实中是「HTTP/3 优先，失败回退 HTTP/2」。
+QUIC 跑在 **UDP** 上，把可靠传输、流控、多路复用全放到用户态：每条流独立重传（消除跨流队头阻塞），TLS 1.3 融进握手（首连 1 RTT，重连 0 RTT）。代价是 UDP 在部分网络被限速或拦截，所以现实是「HTTP/3 优先，失败回退 HTTP/2」。
 
-### **补充 · 线上「接口慢」，前端按什么顺序排查**
+---
+### **补充 · 线上「接口慢」，前端按什么顺序排查？**
 
-先判断「慢在哪一段」，别一上来就怀疑后端：
+先判断慢在哪一段，别一上来就怀疑后端：
 
 1. **DNS**：`domainLookupEnd - domainLookupStart`。
 2. **TCP / TLS**：`connectEnd - connectStart`、`secureConnectionStart`，慢说明握手多、连接没复用。
@@ -4630,8 +4542,9 @@ QUIC 跑在 **UDP** 上，把可靠传输、流控、多路复用全放到用户
 4. **下载**：`responseEnd - responseStart`，查 body 大小、有没有 `gzip` / `br`、有没有重复请求。
 5. **渲染**：请求完了还卡，是 JS 解析执行或布局问题，去 Performance 看长任务。
 
-一句话：**Network 面板里每一行都能拆成这五段，先定位再优化。** 我博客站的 LCP 优化就是先发现瓶颈在图片体积（下载段），而不是接口。
+一句话：Network 面板里每一行都能拆成这五段，先定位再优化。
 
+---
 # 链接知识
 
 ## **①函数柯里化**
@@ -4838,3 +4751,4 @@ useEffect(() => {
         
     - 新项目、追求开发效率和性能。
 ---
+
