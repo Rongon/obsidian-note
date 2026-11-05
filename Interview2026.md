@@ -538,13 +538,12 @@ p.__proto__  // Person.prototype
 Person.prototype.__proto__  // Object.prototype
 p.__proto__.__proto__ //Object.prototype
 p.__proto__.constructor.prototype.__proto__ // Object.prototype
-Person.prototype.constructor.prototype.__proto__ // Object.prototype
 p1.__proto__.constructor // Person
 Person.prototype.constructor  // Person
 ```
 
 ---
-#### JavaScript 如何实现继承？（5种）
+#### ==🔴JavaScript 如何实现继承？（5种）==
 
 - **核心目标**：所有方法都是为了**让属性能独立（不共享）**，同时让**方法能复用（共享在原型上）**。
 - **最终答案**：`组合式继承` 是经典方案，`寄生组合式继承` 是最优方案，而 `class/extends` 就是它们的**语法糖**。
