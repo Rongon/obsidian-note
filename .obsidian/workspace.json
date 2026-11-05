@@ -63,8 +63,7 @@
               "title": "中国共产党简史笔记"
             }
           }
-        ],
-        "currentTab": 2
+        ]
       }
     ],
     "direction": "vertical"
@@ -128,7 +127,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "WorkExperience.md",
+                "file": "Interview2026.md",
                 "followCursor": false,
                 "showSearch": true,
                 "searchQuery": ""
@@ -244,10 +243,11 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "b4a73bf02849b5be",
+  "active": "c8962521f7c6699a",
   "lastOpenFiles": [
-    "Blog.md",
+    "file:D:/Commun/Note/中国共产党简史笔记.md",
     "WorkExperience.md",
+    "Blog.md",
     "Interview2026.md",
     "_bak2.md",
     "_add_chapters.py",
@@ -265,7 +265,6 @@
     "WorkExperience.md~RF66f7da1.TMP",
     "Blog.md~RF66f549d.TMP",
     "InterviewQuestion.md",
-    "file:D:/Commun/Note/中国共产党简史笔记.md",
     "Vue3.md",
     "20261103175032211.png",
     "20261103174405695.png",
