@@ -988,13 +988,13 @@ export default App
 
 ### **补充 · ES Module 和 CommonJS 有什么区别？**
 
-| | CommonJS（`require`） | ES Module（`import`） |
-| --- | --- | --- |
-| 加载时机 | 运行时，同步 | 编译时，静态分析 |
-| 值 | 导出的是**值的拷贝**（改原变量不影响已导出） | 导出的是**引用**（活的绑定） |
-| 位置 | 可以写在 `if` 里 | 只能顶层，不能条件加载（`import()` 除外） |
-| `this` | 指向 `module.exports` | 顶层 `this` 是 `undefined` |
-| tree shaking | 做不到（要到运行才知道用什么） | 能做到（静态结构） |
+|              | CommonJS（`require`）      | ES Module（`import`）        |
+| ------------ | ------------------------ | -------------------------- |
+| 加载时机         | 运行时，同步                   | 编译时，静态分析                   |
+| 值            | 导出的是**值的拷贝**（改原变量不影响已导出） | 导出的是**引用**（活的绑定）           |
+| 位置           | 可以写在 `if` 里              | 只能顶层，不能条件加载（`import()` 除外） |
+| `this`       | 指向 `module.exports`      | 顶层 `this` 是 `undefined`    |
+| tree shaking | 做不到（要到运行才知道用什么）          | 能做到（静态结构）                  |
 
 工程影响：Node 现在两者都支持（`.mjs` / `type: module`）；浏览器只认 ESM；打包器能把 ESM 摇树优化，CJS 基本只能整体打包。
 
