@@ -171,17 +171,16 @@ fn = null  // 切断引用，闭包可被回收
 let id = setInterval(() => {
   console.log('running')
 }, 1000)
-
-// 不需要时清除
-clearInterval(id)
+clearInterval(id)  // 不需要时清除
 
 // 移除事件监听器
-function handler() { console.log('clicked') }
+function handler() { 
+    console.log('clicked') 
+}
 element.addEventListener('click', handler)
 
 // 不需要时移除
 element.removeEventListener('click', handler)
-
 ```
 ---
 #### 箭头函数和普通函数的区别（7点）
