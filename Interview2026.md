@@ -2340,7 +2340,7 @@ onDeactivated(() => {
 ---
 注意点：
 
-- 被缓存的组件不会触发 `mounted` / `unmounted`，而是 `activated` / `deactivated`。
+- 被 `<keep-alive>` 缓存的组件，在“切换”的过程中不会触发 `mounted` / `unmounted`，而是触发 `activated` / `deactivated`。**但如果组件是**第一次挂载，或者被彻底销毁时，它依然会触发 `mounted` 和 `unmounted`。
 - 不要滥用缓存，否则可能导致内存占用过高。通过 `max` 限制缓存数量，或用 `include`/`exclude` 精确控制。
 - 缓存组件的 `data` 状态始终保存在内存中，可能不是所有组件都适合缓存（如包含定时器的组件需要在 `deactivated` 中清理）。
 ---
