@@ -1475,15 +1475,16 @@ interface ButtonProps {
   onClick: (id: number) => void;
 }
 
-// 解构并指定类型
-const MyButton: React.FC<ButtonProps> = ({ label, disabled = false, onClick }) => {
+// 推荐：直接给解构参数加上 ButtonProps 类型
+const MyButton = ({ label, disabled = false, onClick }: ButtonProps) => {
   return (
     <button disabled={disabled} onClick={() => onClick(1)}>
       {label}
     </button>
   );
 };
-// 注：React 18 之后，更推荐直接给参数加类型，而不是用 React.FC
+
+export default MyButton;
 ```
 
 2. Hooks 的类型指定
