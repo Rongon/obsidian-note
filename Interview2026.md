@@ -1587,9 +1587,6 @@ interface ApiResponse<T> {
 - **表现**：如果属性未在声明时或构造函数中赋值，且未标记为可选或 `!`，会报错。⚠️ 该选项需要同时开启 `strictNullChecks` 才能生效。
 ---
 补充说明：
-
-- 从 TypeScript 4.4 开始，`useUnknownInCatchVariables` 也默认为 `true`（`catch` 捕获的变量默认为 `unknown`），但它**不是** `strict` 的子选项，而是独立默认开启的。
-    
 - 在 `tsconfig.json` 中，如果你只想开启部分严格检查，可以单独设置这些选项，而不使用 `"strict": true`。
 ---
 ### 如何为第三方 JavaScript 库编写类型声明文件？
