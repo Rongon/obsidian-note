@@ -2115,21 +2115,6 @@ defineExpose({ focus })  // <script setup> 必须显式暴露
 ```vue
 <!-- Child.vue -->
 <script setup>
-// 方式一：数组语法（仅声明名称）
-const props = defineProps(['title', 'count'])
-
-// 方式二：对象语法（带类型、默认值、校验）
-const props = defineProps({
-  title: { type: String, required: true },
-  count: { type: Number, default: 0 },
-  status: {
-    type: String,
-    default: 'active',
-    validator: (value) => ['active', 'inactive'].includes(value)
-  }
-})
-
-// 方式三：TypeScript 类型声明（推荐在 TS 项目中）
 interface Props {
   title: string
   count?: number
@@ -2154,16 +2139,6 @@ const props = withDefaults(defineProps<Props>(), {
 ```vue
 <!-- Child.vue -->
 <script setup>
-// 方式一：数组语法（仅声明事件名）
-const emit = defineEmits(['update', 'delete'])
-
-// 方式二：对象语法（带参数验证）
-const emit = defineEmits({
-  update: (value) => typeof value === 'string',
-  delete: (id) => Number.isInteger(id)
-})
-
-// 方式三：TypeScript 类型声明
 const emit = defineEmits<{
   (e: 'update', value: string): void
   (e: 'delete', id: number): void
