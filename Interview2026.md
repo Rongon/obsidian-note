@@ -2165,7 +2165,7 @@ function handleDelete(id) {
 ```
 
 ---
-#### 插槽（Slot）是什么？有哪些类型？
+#### ==🔴插槽（Slot）是什么？有哪些类型？==
 
 插槽（Slot）是 Vue 中一种**内容分发机制**，允许父组件向子组件注入模板片段，实现组件的**可复用性和灵活性**。它解决了“组件结构固定但内容可变”的问题。
 
@@ -2180,9 +2180,15 @@ function handleDelete(id) {
 </template>
 
 <!-- 父组件使用 -->
-<Card>
-  <p>这是自定义内容</p>
-</Card>
+<script setup lang="ts">
+import MyCard from './MyCard.vue'
+</script>
+
+<template>
+	<Card>
+	  <p>这是自定义内容</p>
+	</Card>
+</template>
 ```
 
 2. 具名插槽（多个）
