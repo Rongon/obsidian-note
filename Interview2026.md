@@ -1743,7 +1743,7 @@ declare module 'math-utils' {
 - **逐步完善**：可以先用简写 `any`，再逐步补全类型。
 ---
 
-### **补充 · 类型收窄（narrowing）有哪些手段？**
+### ==🔴**补充 · 类型收窄（narrowing）有哪些手段？**==
 
 - `typeof x === 'string'`、`Array.isArray(x)`、`x instanceof Date`。
 ```ts
