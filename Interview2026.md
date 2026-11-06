@@ -1157,6 +1157,25 @@ TypeScript 的设计受到了两种不同编程范式的影响：
 
 **优势**：**安全**，强制你在使用前确认类型，避免运行时错误。
 
+```ts
+// 假设这是从后端 API 或 JSON.parse() 获取的数据，我们不知道具体结构
+function processApiData(data: unknown) {
+  // ❌ 错误：如果是 unknown，不能直接调用任何属性或方法
+  // console.log(data.length); 
+
+  // ✅ 正确：必须先进行类型收窄（Type Narrowing）
+  if (typeof data === 'string') {
+    // 在这个 if 分支里，TS 已经确认 data 是 string
+    console.log('字符串长度：', data.length); 
+  } else if (Array.isArray(data)) {
+    // 在这个分支里，TS 确认 data 是数组
+    console.log('数组元素个数：', data.length);
+  } else {
+    console.log('未知的数据类型');
+  }
+}
+```
+
 ---
 - `never`：不可能存在的类型
 
