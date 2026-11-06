@@ -1360,20 +1360,6 @@ function process<T extends HasId & HasName>(item: T): void {
 
 ---
 1. `Partial<T>`：让所有属性变为可选
-	**实现：**
-```ts
-type Partial<T> = {
-  [P in keyof T]?: T[P]
-}
-```
-
-**拆解：**
-- `keyof T`：获取 `T` 所有键名的联合类型。
-- `[P in keyof T]`：遍历 `T` 的每一个键，`P` 是每个键名。
-- `?:`：把每个属性变为可选属性。
-- `T[P]`：索引访问类型，获取键 `P` 对应的值类型。
-
-**示例：**
 ```ts
 interface User {
   name: string
@@ -1384,20 +1370,7 @@ type PartialUser = Partial<User>
 // 结果：{ name?: string; age?: number }
 ```
 ---
-2. `Pick<T, K>`：从类型中挑选部分属性
-	**实现：**
-```ts
-type Pick<T, K extends keyof T> = {
-  [P in K]: T[P]
-}
-```
-
-**拆解：**
-- `K extends keyof T`：约束 `K` 必须是 `T` 的键名。
-- `[P in K]`：遍历 `K` 中的每个键（`K` 是联合类型）。
-- `T[P]`：从 `T` 中取出对应键的值类型。
-
-**示例：**
+2. `Pick<T, K>`：从类型中挑选部分属性构造新类型
 ```ts
 interface User {
   name: string
@@ -1409,23 +1382,7 @@ type UserPreview = Pick<User, 'name' | 'email'>
 // 结果：{ name: string; email: string }
 ```
 ---
-3. `Omit<T, K>`：从类型中排除部分属性
-	**实现：**
-```ts
-type Omit<T, K extends keyof any> = Pick<T, Exclude<keyof T, K>>
-```
-
-**拆解：**
-- `Exclude<keyof T, K>`：从 `T` 的所有键中剔除 `K` 包含的键，得到剩余的键名联合类型。
-- `Pick<T, ...>`：从 `T` 中挑选这些剩余的键，组成新类型。
-
-`Exclude<U, V>` 本身也是一个内置工具类型，定义是：
-```ts
-type Exclude<U, V> = U extends V ? never : U
-```
-它把联合类型 `U` 中能赋给 `V` 的成员剔除掉。
-
-**示例：**
+3. `Omit<T, K>`：从类型中排除部分属性构造新类型
 ```ts
 interface User {
   name: string
@@ -1436,30 +1393,148 @@ interface User {
 type UserWithoutEmail = Omit<User, 'email'>
 // 结果：{ name: string; age: number }
 ```
-
-**注意：** 标准库中 `Omit` 也可以直接写成：
-```ts
-type Omit<T, K extends keyof any> = {
-  [P in Exclude<keyof T, K>]: T[P]
-}
-```
-两者等价，但官方实现用了 `Pick` 组合，更简洁。
-
----
-共同依赖的核心类型操作：
-
-| 特性                 | 作用                              |
-| ------------------ | ------------------------------- |
-| **`keyof T`**      | 获取 `T` 所有键名的联合类型                |
-| **`[P in K]`**     | 映射类型语法，遍历联合类型 `K` 的每个成员         |
-| **`T[P]`**         | 索引访问类型，获取键 `P` 对应的值类型           |
-| **`extends` 约束**   | 限制类型参数的范围，如 `K extends keyof T` |
-| **`?` 可选修饰符**      | 映射类型中让属性变为可选                    |
-| **条件类型 + `never`** | 用于 `Exclude`，剔除联合类型中的部分成员       |
-
 ---
 ### 如何在 Vue/React 项目中使用 TypeScript？
 
+vue：
+1. 定义 Props 和 Emits（类型声明）
+```vue
+<script setup lang="ts">
+// 1. 定义 Props 接口
+interface Props {
+  title: string;
+  count?: number; // 可选属性
+}
+
+// 使用 withDefaults 提供默认值
+const props = withDefaults(defineProps<Props>(), {
+  count: 0
+});
+
+// 2. 定义 Emits 事件签名
+const emit = defineEmits<{
+  (e: 'update', id: number): void;
+  (e: 'delete', id: number): void;
+}>();
+
+const handleClick = () => {
+  emit('update', 123); // 编辑器会检查参数必须是 number
+};
+</script>
+```
+
+2. 状态与计算属性的类型推导
+	`ref` 和 `computed` 通常会自动推导，复杂类型建议显式指定。
+```vue
+<script setup lang="ts">
+import { ref, reactive, computed } from 'vue';
+
+interface User {
+  name: string;
+  age: number;
+}
+
+// 自动推导为 Ref<number>
+const count = ref(0); 
+
+// 复杂对象建议显式泛型
+const user = reactive<User>({ name: 'Alice', age: 25 });
+
+// computed 自动推导为 ComputedRef<string>
+const greeting = computed(() => `Hello, ${user.name}`);
+</script>
+```
+
+3. 模板 Ref（获取 DOM 或组件实例）
+```vue
+<script setup lang="ts">
+import { ref, onMounted } from 'vue';
+
+// 声明为 HTMLInputElement 或 null
+const inputRef = ref<HTMLInputElement | null>(null);
+
+onMounted(() => {
+  // 需要可选链，因为可能是 null
+  inputRef.value?.focus(); 
+});
+</script>
+
+<template>
+  <input ref="inputRef" />
+</template>
+```
+---
+React：
+1. 定义 Props（使用 Interface 或 Type）
+```ts
+import React from 'react';
+
+interface ButtonProps {
+  label: string;
+  disabled?: boolean;
+  onClick: (id: number) => void;
+}
+
+// 解构并指定类型
+const MyButton: React.FC<ButtonProps> = ({ label, disabled = false, onClick }) => {
+  return (
+    <button disabled={disabled} onClick={() => onClick(1)}>
+      {label}
+    </button>
+  );
+};
+// 注：React 18 之后，更推荐直接给参数加类型，而不是用 React.FC
+```
+
+2. Hooks 的类型指定
+	`useState` 大多数情况能自动推导，但初始值为 `null` 或复杂对象时需要显式指定。
+```ts
+import { useState, useRef, useEffect } from 'react';
+
+// 自动推导为 number
+const [count, setCount] = useState(0);
+
+// 指定为 User 或 null
+interface User { name: string }
+const [user, setUser] = useState<User | null>(null);
+
+// useRef 获取 DOM 节点
+const inputRef = useRef<HTMLInputElement>(null);
+
+useEffect(() => {
+  inputRef.current?.focus();
+}, []);
+```
+
+3. 事件处理函数类型
+	React 有一整套事件类型（`React.ChangeEvent`、`React.MouseEvent` 等）。
+```ts
+// 输入框变化事件
+const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  console.log(e.target.value);
+};
+
+// 按钮点击事件
+const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+  e.preventDefault();
+};
+```
+---
+通用最佳实践：
+
+1. **API 响应泛型化**：封装 Axios/Fetch 时，使用泛型定义返回值类型，让业务层直接拿到有提示的数据。
+```ts
+interface ApiResponse<T> {
+  code: number;
+  data: T;
+  message: string;
+}
+// 使用时：ApiResponse<User>
+```
+
+2. **类型文件抽离**：把全局共享的类型（如 `User`、`Order`）放到 `src/types/` 目录下，通过 `import type` 导入，避免打包冗余。
+
+3. **巧用工具类型**：对于组件的 Props 或 API 返回值，善用 `Partial<T>`（全变可选）、`Pick<T, K>`（挑属性）、`Omit<T, K>`（去属性）来减少重复代码。
 
 ---
 ### tsconfig.json 中的 strict 选项包含哪些子选项？
