@@ -1185,6 +1185,37 @@ function processApiData(data: unknown) {
 - 函数永远不会返回（抛错、死循环）
 - 穷尽性检查（确保覆盖所有联合类型分支）
 - 作为其他类型的子类型，可用于类型运算
+
+```ts
+// 这个函数只要调用，就一定会抛出异常，永远不可能执行到 return
+function throwError(msg: string): never {
+  throw new Error(msg);
+}
+```
+
+```ts
+// **穷尽性检查（最经典的应用场景）**
+type Shape = 'circle' | 'square';
+
+function getArea(shape: Shape): number {
+  switch (shape) {
+    case 'circle':
+      return 3.14 * 10 * 10;
+    case 'square':
+      return 10 * 10;
+    default:
+      // 假设未来某天，有人给 Shape 加了一个新类型 'triangle'
+      // 此时，走到 default 分支的 shape 就会变成 'triangle' 类型
+      // 而 assertNever 要求参数必须是 never，所以 TS 会立刻报错，提醒你漏写了逻辑！
+      return assertNever(shape);
+  }
+}
+
+// 专门用于 exhaustive check（穷尽性检查）的函数
+function assertNever(x: never): never {
+  throw new Error('Unexpected shape: ' + x);
+}
+```
 ---
 ### 什么是泛型？如何使用泛型约束？
 
