@@ -2391,7 +2391,6 @@ state.name = 'Bob'             // ✅ 必须修改属性
 const state = reactive({ count: 0, name: 'Alice' })
 const { count, name } = state
 count++   // ❌ 不会触发更新，因为 count 是普通值
-
 // 需要用 toRefs 保持响应性
 import { toRefs } from 'vue'
 const { count, name } = toRefs(state)
@@ -2400,6 +2399,17 @@ count.value++  // ✅ 触发更新
 // ref 包装对象后，解构也需要处理
 const userRef = ref({ name: 'Alice' })
 const { name } = userRef.value  // ❌ 也是普通值，需用 toRefs(userRef.value)
+
+// 解构 `ref` 对象本身（保留响应性，非常常用）
+// 组合式函数
+function useCounter() {
+  const count = ref(0)
+  return { count } 
+}
+// 组件内使用
+const { count } = useCounter() 
+// ✅ count 依然是 Ref<number> 类型！
+// 访问时需要 count.value，但在模板里可以直接 {{ count }}
 ```
 
 ---
