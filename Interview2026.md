@@ -1894,9 +1894,15 @@ type PrimaryColor2 = typeof theme2.primary;
 ---
 ### **补充 · 为什么更推荐联合类型而不是 `enum`？**
 
-- `enum` 会**产出运行时代码**（一个对象），不是纯类型；`const enum` 虽能消掉产物，但要 `isolatedModules` 配合、且不能跨包。
-- 数字 `enum` 有反向映射（`Status[0] === 'Active'`），序列化和日志里凭空多一层。
-- 联合类型 `type Status = 'active' | 'disabled'` 零运行时开销、可穷尽检查、JSON 里就是字符串。
+随着前端工程化的发展，大家逐渐发现了 `enum` 的致命缺陷，**联合类型（Union Types）几乎全面胜出**：
+
+- **零运行时开销（最关键）**：联合类型 `type Status = 'active' | 'disabled'` 在编译后**完全消失**，不产生任何代码。而 `enum` 会编译出一个巨大的 IIFE（立即执行函数）对象。在现代前端极其看重打包体积（Tree-shaking）的今天，这是原罪。
+
+- **与 JSON / 后端交互更自然**：前后端交互的数据是 JSON。如果你用字符串联合类型 `'active'`，网络请求里传的就是 `"active"`。但如果你用数字枚举，传过去就是个 `1`，如果不查代码根本不知道 `1` 代表什么。
+
+- **避免“反向映射”的污染**：数字枚举会把对象变成双向映射（`{ 0: 'Up', Up: 0 }`），如果你用 `Object.keys(Direction)`，会得到 `['0', '1', 'Up', 'Down']`，这在某些场景下会导致灾难性的 Bug。
+
+- **`const enum` 的坑**：为了解决体积问题，TS 推出了 `const enum`，但它遇到 Babel 或 Vite 的 `isolatedModules` 模式时会报错（因为它需要跨文件编译才能把值内联），非常折腾。
 
 ```ts
 type Status = 'active' | 'disabled'

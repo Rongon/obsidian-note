@@ -176,6 +176,26 @@ function changeDirection(direction： Direction) {
 
 ### 枚举类型enum
 
+已过时，建议使用联合类型
+```ts
+// 推荐做法：联合类型 + 映射对象
+type OrderStatus = 'Pending' | 'Paid' | 'Shipped' | 'Completed';
+
+const OrderStatusMap: Record<OrderStatus, { text: string; code: number }> = {
+  Pending: { text: '待支付', code: 1 },
+  Paid: { text: '已支付', code: 2 },
+  Shipped: { text: '已发货', code: 3 },
+  Completed: { text: '已完成', code: 4 },
+};
+
+function getOrderStatusText(status: OrderStatus) {
+  return OrderStatusMap[status].text;
+}
+
+getOrderStatusText('Paid'); // ✅ 有精准的 IDE 提示，类型安全
+```
+---
+
 **方便与后端的交互，键默认从0开始**
 
 ```ts
@@ -500,6 +520,26 @@ let x: [string, number];
 ---
 
 #### [enum](https://zhongsp.github.io/TypeScript/zh/handbook/basic-types.html#enum)
+
+已过时，建议使用联合类型
+```ts
+// 推荐做法：联合类型 + 映射对象
+type OrderStatus = 'Pending' | 'Paid' | 'Shipped' | 'Completed';
+
+const OrderStatusMap: Record<OrderStatus, { text: string; code: number }> = {
+  Pending: { text: '待支付', code: 1 },
+  Paid: { text: '已支付', code: 2 },
+  Shipped: { text: '已发货', code: 3 },
+  Completed: { text: '已完成', code: 4 },
+};
+
+function getOrderStatusText(status: OrderStatus) {
+  return OrderStatusMap[status].text;
+}
+
+getOrderStatusText('Paid'); // ✅ 有精准的 IDE 提示，类型安全
+```
+---
 
 **用有意义的名字代替难以记忆的数字或字符串，让代码更易读、更安全。**
 
