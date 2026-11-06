@@ -1589,7 +1589,7 @@ interface ApiResponse<T> {
 补充说明：
 - 在 `tsconfig.json` 中，如果你只想开启部分严格检查，可以单独设置这些选项，而不使用 `"strict": true`。
 ---
-### 如何为第三方 JavaScript 库编写类型声明文件？
+### ==🔴如何为第三方 JavaScript 库编写类型声明文件？==
 
 总结：
 
