@@ -1847,16 +1847,49 @@ function printLength(str: string | null | undefined) {
 追问「`as` 算不算收窄」：不算。`as` 是骗编译器，运行时不校验；收窄是编译器自己推出来的结论。
 
 ---
-### **补充 · `satisfies` 是干什么的？和类型标注有什么区别？**
+### ==🔴**补充 · `satisfies` 是干什么的？和类型标注有什么区别？**==
 
 `satisfies` 用来**校验形状但不改写推断结果**。
 
+我们用一个**定义主题色配置**的场景来对比。在这个场景里，我们既希望约束“所有的键和值必须是字符串”，又希望保留具体的颜色值（以便 IDE 能精准提示或做类型判断）。
+
+1. 使用类型标注 `: Record<string, string>`
 ```ts
-const routes = { home: '/', posts: '/posts' } satisfies Record<string, string>
-// routes.home 的类型仍是 '/'（字面量）
+// 强制标注类型：Record<string, string>
+const theme1: Record<string, string> = {
+  primary: '#1890ff',
+  success: '#52c41a',
+};
+
+// ✅ 形状校验通过：键和值都是 string
+// ❌ 但类型信息被“放宽”了，丢失了具体的字面量
+type PrimaryColor = typeof theme1.primary; 
+// PrimaryColor 的类型是 string（而不是 '#1890ff'）
+
+// 所以如果你手滑拼错了属性，TS 不会报错
+console.log(theme1.prmiary); // 编译通过，运行时报错（undefined）
 ```
 
-换成 `: Record<string, string>` 标注，每个值会被放宽成 `string`，字面量信息就丢了。所以 `satisfies` 适合配置对象、路由表、主题 token——要保证形状对，又不想丢掉具体类型。
+2. 使用 `satisfies` 操作符
+```ts
+// 使用 satisfies 校验：必须满足 Record<string, string>
+const theme2 = {
+  primary: '#1890ff',
+  success: '#52c41a',
+} satisfies Record<string, string>;
+
+// ✅ 形状校验通过
+// ✅ 类型信息完美保留！
+type PrimaryColor2 = typeof theme2.primary; 
+// PrimaryColor2 的类型是 '#1890ff'（精确的字面量类型）
+
+// 此时，如果你在代码里写错了属性名，TS 依然会精准报错
+// console.log(theme2.prmiary); // ❌ 编译报错：属性 'prmiary' 不存在
+```
+
+什么时候适合用 `satisfies`？
+
+当你想**校验一个对象是否符合某个形状，但你又极其需要保留它原本精准的字面量类型**时。如复杂的配置对象（配置表、路由表、主题 Token）。这就是 `satisfies` 的核心主场。如果你用 `:` 标注，键值的字面量信息全丢了，你的代码提示和自动补全就废了。
 
 ---
 ### **补充 · 为什么更推荐联合类型而不是 `enum`？**
