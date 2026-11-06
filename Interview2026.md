@@ -1346,7 +1346,7 @@ function process<T extends HasId & HasName>(item: T): void {
 }
 ```
 ---
-### TypeScript 的工具类型 Partial、Pick、Omit 是如何实现的？
+### ==🔴TypeScript 的工具类型 Partial、Pick、Omit 是如何实现的？==
 
 总结：
 
