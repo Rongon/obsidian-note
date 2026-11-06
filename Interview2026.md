@@ -1019,7 +1019,7 @@ TypeScript 与 Js 核心区别在于 TypeScript 增加了**静态类型系统**�
 TypeScript 的优势主要体现在：静态类型检查能提前发现错误；编辑器智能提示能显著提升开发效率；类型定义本身就是代码的最佳文档，降低团队协作和维护成本；重构时编译器会自动提示所有受影响的代码，安全可靠。
 
 ---
-### interface 和 type 有什么区别？什么时候用 interface，什么时候用 type？
+### ==🔴interface 和 type 有什么区别？什么时候用 interface，什么时候用 type？==
 
 1. 定义范围不同
 	`type` 可以定义 `interface` 无法表示的类型：

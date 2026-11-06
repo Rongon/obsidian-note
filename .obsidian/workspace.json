@@ -63,8 +63,7 @@
               "title": "中国共产党简史笔记"
             }
           }
-        ],
-        "currentTab": 3
+        ]
       }
     ],
     "direction": "vertical"
@@ -128,7 +127,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "file:D:/Commun/Note/中国共产党简史笔记.md",
+                "file": "Interview2026.md",
                 "followCursor": false,
                 "showSearch": true,
                 "searchQuery": ""
@@ -244,10 +243,10 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "36f0731c82763f1b",
+  "active": "c8962521f7c6699a",
   "lastOpenFiles": [
-    "Interview2026.md",
     "file:D:/Commun/Note/中国共产党简史笔记.md",
+    "Interview2026.md",
     "WorkExperience.md",
     "Blog.md",
     "_bak2.md",
