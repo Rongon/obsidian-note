@@ -1746,11 +1746,103 @@ declare module 'math-utils' {
 ### **补充 · 类型收窄（narrowing）有哪些手段？**
 
 - `typeof x === 'string'`、`Array.isArray(x)`、`x instanceof Date`。
+```ts
+function processValue(val: string | number) {
+  if (typeof val === 'string') {
+    // 这里 TS 知道 val 一定是 string
+    console.log(val.toUpperCase());
+  } else {
+    // 这里 TS 知道 val 一定是 number
+    console.log(val.toFixed(2));
+  }
+}
+```
+
 - `'a' in x`：按属性存在收窄。
+	用于通过判断某个属性是否存在，来区分两个结构不同的对象联合类型。
+```ts
+interface Admin { name: string; permissions: string[] }
+interface NormalUser { name: string; email: string }
+
+function checkUser(user: Admin | NormalUser) {
+  if ('permissions' in user) {
+    // 这里 TS 知道 user 是 Admin
+    console.log(user.permissions);
+  } else {
+    // 这里 TS 知道 user 是 NormalUser
+    console.log(user.email);
+  }
+}
+```
+
 - **判别联合**：`if (x.kind === 'ok')` —— 最常用，靠公共字段收窄整个联合类型。
+	最强大、最常用的模式。联合类型中每个接口都有一个**公共的字面量字段**（比如 `type` 或 `status`）。
+```ts
+type Response = 
+  | { status: 'success'; data: string[] }
+  | { status: 'error'; message: string };
+
+function handleResponse(res: Response) {
+  if (res.status === 'success') {
+    // TS 知道这里是成功分支，自动推断出 res 有 data 属性
+    console.log(res.data);
+  } else {
+    // TS 知道这里是失败分支，自动推断出 res 有 message 属性
+    console.error(res.message);
+  }
+}
+```
+
 - 自定义类型守卫：`function isUser(x: unknown): x is User`。
+	当上述内置方法不够用，或者你想复用判断逻辑时，可以用 `arg is Type` 语法自定义一个函数。
+```ts
+interface User { id: number; name: string }
+
+// 返回值类型写为 `user is User`
+function isUser(user: unknown): user is User {
+  return (
+    typeof user === 'object' && 
+    user !== null && 
+    'id' in user && 
+    'name' in user
+  );
+}
+
+function printUser(data: unknown) {
+  if (isUser(data)) {
+    // 一旦通过判断，这里 TS 就确信 data 是 User 类型
+    console.log(data.name);
+  }
+}
+```
+
 - 断言函数：`function assertUser(x: unknown): asserts x is User`。
+	如果检查不通过就直接抛出错误中断执行，可以用 `asserts` 语法。常用于在函数开头校验参数。
+```ts
+// 返回值类型写为 `asserts val is string`
+function assertIsString(val: unknown): asserts val is string {
+  if (typeof val !== 'string') {
+    throw new Error('Not a string!');
+  }
+}
+
+function doSomething(val: unknown) {
+  assertIsString(val);
+  // 执行完上面这行断言后，TS 会认为下面的 val 100% 是 string
+  console.log(val.toUpperCase());
+}
+```
+
 - 空值收窄：`x != null` 能同时摘掉 `null` 和 `undefined`。
+	`!= null` 是一个非常巧妙的写法，它不仅能判断 `null`，**同时也能排除 `undefined`**（因为 `null == undefined`）。
+```ts
+function printLength(str: string | null | undefined) {
+  if (str != null) {
+    // 这里 TS 知道 str 既不是 null 也不是 undefined，一定是 string
+    console.log(str.length);
+  }
+}
+```
 
 追问「`as` 算不算收窄」：不算。`as` 是骗编译器，运行时不校验；收窄是编译器自己推出来的结论。
 
