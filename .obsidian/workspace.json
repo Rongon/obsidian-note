@@ -246,6 +246,8 @@
   },
   "active": "c55d575e5b0772a5",
   "lastOpenFiles": [
+    "_archive/Blog-2026-11-08-before-cleanup.md",
+    "_edit_blog.py",
     "Interview2026.md",
     "Blog.md",
     "SKILLS.md",
@@ -264,7 +266,6 @@
     "Vue3.md",
     "Typescript.md",
     "_bak2.md",
-    "_add_chapters.py",
     "_bak_before_redo.md",
     "_archive/InterviewQuestion-2026-11-04.md",
     "_o.md",
@@ -291,7 +292,6 @@
     "Vite.md",
     "ComputerNetwork.md",
     "项目知识点重难点讲解.md",
-    "React文档笔记.md",
     "未命名.canvas"
   ]
 }
