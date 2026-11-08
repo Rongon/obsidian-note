@@ -55,7 +55,7 @@
 
 6. **响应式图片（srcset + sizes）** ✅ ｜ 鱼皮把这类归在「缩略图」里，我按 `srcset` 宽度描述符实现：同一张图生成 400 / 800 / 1200 / 1600 四档，用 `sizes` 告诉浏览器槽位多宽。这一项收益最大：首屏传输 18.2 MB → 1.8 MB。
 
-7. **代码压缩 / tree shaking** ✅ ｜ Vite 生产构建默认做了压缩；我亲手做的是「按需引入」——Element Plus 从全量 `app.use` 改成只注册 5 个组件，入口包 403 KiB → 290 KiB（−28%）。
+7. **按需引入（tree shaking 是它配套的结果，不是我写的代码）** ✅ ｜ 我亲手做的是按需引入：Element Plus 从全量 `app.use` 改成只注册 2 个组件（`ElButton` / `ElPagination`）+ 2 个命令式服务（`ElMessage` / `ElMessageBox`），样式也逐组件引。阶段 3 记录：入口 chunk 403 KiB → 290 KiB（−28%）；之后功能变多，现在约 304 KiB、gzip 92 KiB。**tree shaking 不是我写的代码，是这个改动之后打包器自动生效的结果。**
 
 8. **GZIP 传输压缩** ❌ ｜ 应该这么做：Nginx 三行 `gzip on; gzip_types text/css application/javascript application/json image/svg+xml; gzip_min_length 1024;`；Node 用 `compression` 中间件。图片和 woff2 不要再压，它们本来已经压过。有 Brotli 就优先 br、回退 gzip。验证：`curl -H 'Accept-Encoding: gzip' -I` 看有没有 `Content-Encoding`——我在 GitHub Pages 上就是这么测出「有 gzip、没有 Brotli」的。
 
@@ -75,11 +75,12 @@
 
 #### 难点 3：代码相关三项（不是「代码写短一点」）
 
-1. **tree shaking（先记住：它是一个默认行为，不是你写的代码）**
-   - **它是什么**：打包时把「引了但一次都没用到」的代码删掉，让产物变小。
-   - **它凭什么能做到**：ESM 的 `import` / `export` 是**静态语法**——不用运行代码，光看写法就能分析出谁引用了谁，所以打包器敢删；CommonJS 的 `require` 是运行时求值，静态分析做不了，摇不掉。**所以前提是用 ESM。**
-   - **你要亲手做的只有三个选择**：① 不用 CommonJS；② 不写「转口文件」（就是建一个 `index.ts`，把同目录一堆组件统一 `export` 出去，让别人能一行 import）——它会让打包器把没用到的模块也一起拉进来，把 tree shaking 的效果吃掉；③ 组件库**按需引入**，而不是 `app.use(ElementPlus)` 全量引入。
-   - **剩下的 Vite 生产构建（Rollup）默认就做了，我不需要写任何配置。** 所以这一项在答辩时要落在「我做了哪三个选择」上，不要落到「Rollup 内部怎么实现」上——后者是源码级，超出我们要展示的层次。
+1. **按需引入（tree shaking 是它配套的结果，不是我写的代码）**
+   - **tree shaking 是什么**：打包时把「`import` 了但一次没用到」的 ESM 模块删掉。**它是 Vite / Rollup 的默认行为，我不需要写任何配置**（Rollup 的 `treeshake` 选项默认就是 `true`）。
+   - **它凭什么能做到**：`export` 是静态语法，不运行代码就能算出谁引用了谁，所以敢删；CommonJS 的 `require` 要运行时求值，静态分析做不了，摇不掉。
+   - **我不需要「开启」它，只需要不破坏它**：① 用 ESM，不用 CommonJS；② 组件库按需引入，而不是 `app.use(ElementPlus)`——全量注册等于「所有组件都被引用了」，摇不动；③ 少用「转口文件」（一个 `index.ts` 里 `export *` 一堆模块），它会把没用到的也拉进来。
+   - **要动的配置只有极少数情况**：确实要调时改 `build.rollupOptions.treeshake`（关掉或调激进度）；默认值就是对的，正常不用碰。
+   - **答辩落点**：讲「我把哪三件事做对了」，不要讲 Rollup 内部怎么标记副作用、怎么删——那是源码级，超出要展示的层次。
 2. **代码分割（按需加载）**：动态 `import()` 是打包器唯一的分包信号。最典型的是**路由级懒加载**——每个页面变成独立 chunk，首屏只加载首页需要的那个。这正是简历第 1 条里「路由级代码分割」和重难点 3 里讲过的同一个机制。
 3. **预加载**：`<link rel="preload">` 把首屏必需的关键资源提前拉（比如首屏主图、关键字体）；`rel="prefetch"` 在空闲时提前拉**下一个页面**可能要用的资源（比如预取文章列表页的 chunk）。两者区别要讲清：preload 是「现在就要」，prefetch 是「以后可能要」。
 
@@ -119,7 +120,7 @@ A：「收益最大的是响应式图片。第一版把 3000px 的原图塞进 3
 A：「懒加载是让浏览器**延迟**加载。首屏那张图是用户最先要看到的内容，给它加懒加载等于主动推迟 LCP，是反效果。正确做法是非首屏图片 `loading="lazy"`，首屏主图加 `fetchpriority="high"`。」
 
 **Q4：「tree shaking 是怎么生效的？」**
-A：「前提是用 ESM。`import` / `export` 是静态语法，打包器在构建时就能分析出哪些导出没有被任何地方引用，从而删掉；CommonJS 的 `require` 是运行时求值的，静态分析做不了，所以摇不掉。落地时要避免 barrel file——一个 `index` 里 re-export 一大堆，会把没用到的模块也一起拉进来。」
+A：「它是打包器的默认行为，我没写配置。原理是 ESM 的 `export` 属于静态语法，构建时不用运行代码就能算出哪些导出没被引用，于是删掉；CommonJS 的 `require` 是运行时求值，摇不掉。我这边它之所以生效，是因为把 `app.use(ElementPlus)` 全量注册改成了按需引入——不改成按需，它摇不动。另外要避开 barrel file（一个 `index` 里 re-export 一大堆）。」
 
 **Q5：「HTTP/2 为什么比 HTTP/1.1 快？」**
 A：「同一连接多路复用：一个 TCP 连接上并行传多个文件，省掉 HTTP/1.1 的队头阻塞和多个连接反复建连的开销，头部还用 HPACK 压缩了。但有一个运行限制：浏览器不支持明文 h2c，本地要测 HTTP/2 必须用 HTTPS 自签证书。另外它也不是万能的——如果站点本来就没几个请求，提升就不明显。」
@@ -977,9 +978,9 @@ q68 / effort / PSNR / srcset / WebP / 懒加载 / LCP / CLS / FCP / TBT / SI / T
 
 #### tree-shaking
 
-**是什么**：打包时把「导入了但没用」的代码删掉。前提是代码可静态分析、且没有副作用。
+**是什么**：打包时把「导入了但没用」的 ESM 模块删掉。它是 Vite / Rollup 的默认行为，不需要配置（Rollup 的 `treeshake` 默认 `true`）；前提是代码可静态分析（ESM）、且这些模块没有副作用。
 
-**为什么这里提它**：`app.use(ElementPlus)` 这种「运行时全量注册」的写法让静态分析失效——打包器看不出哪些组件会被用到，只能全留下。
+**为什么这里提它**：`app.use(ElementPlus)` 这种「运行时全量注册」的写法会让它失效——所有组件都被引用了，打包器只能全留下。所以真正要做的是按需引入，tree shaking 随后自动生效。
 
 ---
 
@@ -1175,7 +1176,7 @@ q68 / effort / PSNR / srcset / WebP / 懒加载 / LCP / CLS / FCP / TBT / SI / T
 
 **B2. 把 Element Plus 从全量引入改成按需，为什么能省 200 KB？**
 
-答：全量 `app.use(ElementPlus)` 会注册 80 多个组件，打包器没法证明「你没用到剩下的」，tree shaking 直接失效。按需引入后只有 5 个组件进包，入口 JS 从 295 KB 降到 92 KB（gzip 后 90 KB 左右）。**估库体积别看 node_modules，看入口包里它占多少。**
+答：全量 `app.use(ElementPlus)` 会注册 80 多个组件，打包器没法证明「你没用到剩下的」，tree shaking 直接失效。按需引入后只注册 2 个组件 + 2 个命令式服务，其余组件模块在构建期被删掉；阶段 3 记录是入口 403 KiB → 290 KiB（现在功能变多，约 304 KiB / gzip 92 KiB）。**估库体积别看 node_modules，看入口包里它占多少。**
 
 **B3. 路由级代码分割，为什么首页一个字节都没省？**
 
@@ -1201,7 +1202,7 @@ q68 / effort / PSNR / srcset / WebP / 懒加载 / LCP / CLS / FCP / TBT / SI / T
 
 **C4. 你测的是 `pnpm dev` 吗？**
 
-答：不是，只测构建产物 + 真实线上地址。dev 服务器不做压缩、不做 tree shaking、不做产物拆分，那里测出来的数字没有参考意义。
+答：不是，只测构建产物 + 真实线上地址。dev 服务器不做打包压缩、没有 tree shaking、也不做产物拆分，那里测出来的数字没有参考意义。
 
 ### D 组 · 部署与双版本
 
