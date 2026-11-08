@@ -63,7 +63,8 @@
               "title": "中国共产党简史笔记"
             }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -127,7 +128,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Interview2026.md",
+                "file": "Blog.md",
                 "followCursor": false,
                 "showSearch": true,
                 "searchQuery": ""
@@ -243,14 +244,16 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "c8962521f7c6699a",
+  "active": "c55d575e5b0772a5",
   "lastOpenFiles": [
-    "Vue3.md",
-    "Interview2026.md",
-    "Typescript.md",
     "file:D:/Commun/Note/中国共产党简史笔记.md",
     "WorkExperience.md",
+    "_edit_we.py",
+    "_edit_text.py",
     "Blog.md",
+    "Interview2026.md",
+    "Vue3.md",
+    "Typescript.md",
     "_bak2.md",
     "_add_chapters.py",
     "_dedupe_blog.py",
@@ -264,8 +267,6 @@
     "_add_net.py",
     "_fix_order.py",
     "_ins_questions.py",
-    "WorkExperience.md~RF66f7da1.TMP",
-    "Blog.md~RF66f549d.TMP",
     "InterviewQuestion.md",
     "20261103175032211.png",
     "20261103174405695.png",
@@ -290,7 +291,6 @@
     "ComputerNetwork.md",
     "项目知识点重难点讲解.md",
     "React文档笔记.md",
-    "面试.md",
     "未命名.canvas"
   ]
 }
