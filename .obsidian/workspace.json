@@ -246,6 +246,8 @@
   },
   "active": "c55d575e5b0772a5",
   "lastOpenFiles": [
+    "_rewrite.py~RF15ecc23.TMP",
+    "_rewrite.py",
     "_fixblank.py",
     "_ins.py",
     "_fix2.py",
@@ -264,9 +266,7 @@
     "_bak_before_redo.md",
     "_redo.py",
     "_archive/InterviewQuestion-2026-11-04.md",
-    "_archive",
     "_o.md",
-    "_add_net2.py",
     "_orig26.md",
     "InterviewQuestion.md",
     "20261103175032211.png",
