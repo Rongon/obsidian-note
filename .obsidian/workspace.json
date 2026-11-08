@@ -246,6 +246,8 @@
   },
   "active": "c55d575e5b0772a5",
   "lastOpenFiles": [
+    "_fixblank.py",
+    "_ins.py",
     "_fix2.py",
     "_fix_score.py",
     "file:D:/Commun/Note/中国共产党简史笔记.md",
@@ -266,8 +268,6 @@
     "_o.md",
     "_add_net2.py",
     "_orig26.md",
-    "_add_net.py",
-    "_fix_order.py",
     "InterviewQuestion.md",
     "20261103175032211.png",
     "20261103174405695.png",
