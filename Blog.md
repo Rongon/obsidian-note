@@ -267,16 +267,8 @@ export default function markdownPlugin() {
 **`enforce: 'pre'` 为什么必要**：要在 Vite 自己的解析之前把 `.md` 截下来，否则它会当成 JS 去解析然后报错。这正是 `enforce` 那一段的真实用途。
 `apply` 我们这里用不上（只在想让某段逻辑只在打包时跑时才写 `apply: 'build'`）。
 
-**一个必须知道的对照：`?raw`**
 
-很多人这样读 Markdown：`import raw from './a.md?raw'`。`?raw` 是 Vite 内置的，作用是**「不要编译，把文件原始文本给我」**。
-区别：它给你的是 **Markdown 原文**，你还得在浏览器里解析 → **那是运行时渲染，又回到慢的那条路**。我们自写插件给的是**已编译的 HTML** → 构建时渲染。
-**所以看到 `?raw` 要立刻反应过来：它是「原样给我」，不是「帮我编译」。**
 
-**新版 Vite 还提供了带 filter 的对象写法**，能更精确地只匹配 `.md`：
-`transform: { filter: { id: 正则 }, handler(src, id) { ... } }`
-
-**权威出处**：Vite 官方 Plugin API `https://vite.dev/guide/api-plugin`（里面就有 "Transforming Custom File Types" 这个例子）；社区插件见 `https://github.com/unplugin/unplugin-vue-markdown`。
 
 #### 难点 2：`import.meta.glob` 是什么
 
