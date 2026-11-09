@@ -271,9 +271,6 @@ export default function markdownPlugin() {
 **`enforce: 'pre'` 为什么必要**：要在 Vite 自己的解析之前把 `.md` 截下来，否则它会当成 JS 去解析然后报错。这正是 `enforce` 那一段的真实用途。
 `apply` 我们这里用不上（只在想让某段逻辑只在打包时跑时才写 `apply: 'build'`）。
 
-
-
-
 #### 难点 2：`import.meta.glob` 是什么
 
 一句话：**Vite 提供的「构建时批量导入一堆文件」的 API**。
