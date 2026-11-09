@@ -198,12 +198,12 @@ Markdown 文件本身不是网页，必须先经过「解析」变成 HTML。
 
 ##### 1.1 现成的 Vite 插件有什么（官方 / 社区 / 个人）
 
-| 类别 | 代表 | 说明 |
-|---|---|---|
-| Vite 官方 | `@vitejs/plugin-vue`、`@vitejs/plugin-react`、`@vitejs/plugin-vue-jsx`、`@vitejs/plugin-legacy` | 只有「框架支持」这一类。`plugin-legacy` 就是官方的 |
-| 社区成熟（Markdown 方向） | `unplugin-vue-markdown`（前身 `vite-plugin-vue-markdown`，更早是 antfu 的 `vite-plugin-md`） | 最主流，但它做的是「把 `.md` 变成一个 Vue 组件」，通常配 `vite-plugin-pages` 做文件路由——属于文档站全家桶 |
-| 社区成熟（另两个方向） | `@mdx-js/rollup`（MDX）、`vite-plugin-markdown`（较老，导出 HTML 字符串） | MDX 允许在 Markdown 里写 JSX；`vite-plugin-markdown` 基本没人用了 |
-| 个人自定义 | 自己写 | 就是一个普通对象 + 几个钩子 |
+| 类别                | 代表                                                                                           | 说明                                                                     |
+| ----------------- | -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Vite 官方           | `@vitejs/plugin-vue`、`@vitejs/plugin-react`、`@vitejs/plugin-vue-jsx`、`@vitejs/plugin-legacy` | 只有「框架支持」这一类。`plugin-legacy` 就是官方的                                      |
+| 社区成熟（Markdown 方向） | `unplugin-vue-markdown`（前身 `vite-plugin-vue-markdown`，更早是 antfu 的 `vite-plugin-md`）          | 最主流，但它做的是「把 `.md` 变成一个 Vue 组件」，通常配 `vite-plugin-pages` 做文件路由——属于文档站全家桶 |
+| 社区成熟（另两个方向）       | `@mdx-js/rollup`（MDX）、`vite-plugin-markdown`（较老，导出 HTML 字符串）                                 | MDX 允许在 Markdown 里写 JSX；`vite-plugin-markdown` 基本没人用了                  |
+| 个人自定义             | 自己写                                                                                          | 就是一个普通对象 + 几个钩子                                                        |
 
 **关键事实：Vite 官方没有 Markdown 插件。**
 
