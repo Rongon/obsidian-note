@@ -606,27 +606,14 @@ A：「`?tag=vue&tag=vite`，`route.query.tag` 读出来可能是 `string`、也
 - ❌ **一份代码里塞满开关**：到处写 `if (import.meta.env.VITE_NAIVE)`，代码难看，而且自己都讲不清哪儿不一样。
 - ✅ **同一份源码 + 另一个构建 mode**（当前做法）：`vite build --mode naive`，在 `vite.config.ts` 里按 `mode` 分叉——静态路由表、Element Plus 整包、`ResponsiveImage` 换成原生 `<img>`、`VersionSwitch` 换成慢版、markdown 不生成 `srcset`、另一个 HTML 入口（不带 preload）、`base` 换 `/Blog/naive/`、产物进 `dist-naive`。页面上的字、结构、样式全部来自同一份源码，两版之间只剩「优化加没加」这一个变量。
 
-**CI 里实际跑的步骤**（`.github/workflows/deploy.yml`）：
-
-```bash
-pnpm build --mode ghpages              # 主站（优化后）→ dist/        base=/Blog/
-cp dist/index.html dist/404.html       # SPA 深链接回退
-pnpm exec vite build --mode naive      # 慢版（优化前）→ dist-naive/  base=/Blog/naive/
-node scripts/copy-naive-images.mjs     # 原图拷进 dist-naive/images
-mv dist-naive/index.naive.html dist-naive/index.html
-cp dist-naive/index.html dist-naive/404.html
-mkdir -p dist/naive && cp -r dist-naive/. dist/naive/
-pnpm check:parity                      # 两版静态文字逐字比对，不一致就不发
-```
-
+---
 #### 难点 2：控制变量法——一次只改一项
 
 如果 12 项优化一起上，你只能得到一个总数，面试官问「哪一项收益最大」时你答不上来。
 
 **做法：一次只加一项。** 每加一项 → 重新构建 → 重新跑测 → 把 JSON 存成 `step-01.json`、`step-02.json`…… → 提交。最后就得到一张**逐项递增**的表，而不是一个总数。
 
-**别忘了诚实记录「没效果的项」。** 比如 GZIP 在自己的代码体积本来就小时收益不明显；CDN 和 HTTP/2 同时开启反而互相抵消。把这些写进去反而加分——它证明你测的是真实结果，而不是背了一套理论。
-
+---
 #### 难点 3：测量本身要标准化，否则数据不可比
 
 不固定条件，数据就没有可比性，面试官一问就穿。要固定的东西：
