@@ -600,34 +600,39 @@ A：「`?tag=vue&tag=vite`，`route.query.tag` 读出来可能是 `string`、也
 
 #### 难点 1：怎么维护两个版本（不复制两份仓库）
 
-三种维护方式：
+**维护两个版本的三种方式**：
 
 - ❌ **复制两份项目文件夹**：改一处要改两遍，迟早分叉，而且面试官一看仓库就知道你在同步两份代码。
 - ❌ **一份代码里塞满开关**：到处写 `if (import.meta.env.VITE_NAIVE)`，代码难看，而且自己都讲不清哪儿不一样。
-- ✅ **同一份源码 + 另一个构建 mode**（当前做法）：`vite build --mode naive`，在 `vite.config.ts` 的 `naive` 分支里把优化项逐项关掉（静态路由、整包 Element Plus、`ResponsiveImage` 换成原生 `<img>`、markdown 不生成 `srcset`、另一个 HTML 入口去掉 preload、`base` 换 `/Blog/naive/`）。页面上的字、结构、样式全部来自同一份源码，两版之间只剩「优化加没加」这一个变量。
+- ✅ **同一份源码 + 另一个构建 mode**（当前做法）：`vite build --mode naive`，在 `vite.config.ts` 里按 `mode` 分叉——静态路由表、Element Plus 整包、`ResponsiveImage` 换成原生 `<img>`、`VersionSwitch` 换成慢版、markdown 不生成 `srcset`、另一个 HTML 入口（不带 preload）、`base` 换 `/Blog/naive/`、产物进 `dist-naive`。页面上的字、结构、样式全部来自同一份源码，两版之间只剩「优化加没加」这一个变量。
 
-  > 曾经用过「用 git tag 冻结提交、从 tag 构建」的写法。它的问题是 tag 里的文案会停在过去 —— 首页标题改过、导航改过、项目页删了又加回来，于是两版同时差着性能和内容两样东西，读者分不清看到的差别是谁带来的。细节见后文「历史记录」。
+  > 曾经用过「检出 `v0-naive` 这个 tag 单独构建」的写法。它的问题是 tag 里的文案与结构停在优化那天——首页标题改过、导航改过、项目页删了又加回来，于是「快版 vs 慢版」同时差着性能和内容两样东西，读者分不清看到的差别是谁带来的。细节见后文「历史记录」。
 
-这种方式的好处是：**两版之间只有一个变量**。代价是不能再声称「这是当年真实的代码」，能声称的是「同一份源码，把这些优化项逐个关掉」—— 这句话不唬人，但它经得起比对。
+这种方式的好处是：**两版之间只有一个变量**。代价是不能再说「这是当年那份代码」，能说的是「同一份源码，起点是未优化那版，优化是逐项加上去的，`naive` mode 把这个起点原样重建」—— 这句话不唬人，但它经得起比对。
 
-**子路径部署有一个必踩的坑**：naive 版要放在 `/naive/` 下，就必须在构建时把 Vite 的 `base` 设成 `/Blog/naive/`，否则它引用资源时还会去找 `/assets/xxx.js`，整页白屏。
+**子路径部署有一个必踩的坑**：慢版要放在 `/Blog/naive/` 下，构建时 `base` 就必须是 `/Blog/naive/`，否则它引用资源时还会去找 `/assets/xxx.js`，整页白屏。
 
 ```ts
-// vite.config.ts —— 只在构建 naive 版时把 base 改掉
-export default defineConfig({
-  base: process.env.NAIVE ? '/naive/' : '/',
+// vite.config.ts —— 一个 config，三种 mode
+export default defineConfig(({ mode }) => {
+  const naive = mode === 'naive'
+  const base = mode === 'ghpages' ? '/Blog/' : naive ? '/Blog/naive/' : '/'
+  return { base /* ... */ }
 })
 ```
 
-```bash
-# 两份产物，一次部署（现在就这么跑）
-pnpm build --mode ghpages                 # 优化后 → dist/       base=/Blog/
-pnpm exec vite build --mode naive         # 优化前 → dist-naive/ base=/Blog/naive/
-node scripts/copy-naive-images.mjs        # 原图拷进慢版产物
-# 再把 dist-naive/ 整体拷进 dist/naive/，并各复制一份 404.html
-```
+**CI 里实际跑的步骤**（`.github/workflows/deploy.yml`）：
 
-部署上可以直接用免费静态托管同时放两份产物。选托管时要注意两个已知事实（都是之前实测/官方文档核对过的）：`*.github.io` 在大陆实测**可达**，而 `*.pages.dev` 实测**不可达**——所以主链接优先放可访问性更稳的那家，另一家做备份。
+```bash
+pnpm build --mode ghpages              # 主站（优化后）→ dist/        base=/Blog/
+cp dist/index.html dist/404.html       # SPA 深链接回退
+pnpm exec vite build --mode naive      # 慢版（优化前）→ dist-naive/  base=/Blog/naive/
+node scripts/copy-naive-images.mjs     # 原图拷进 dist-naive/images
+mv dist-naive/index.naive.html dist-naive/index.html
+cp dist-naive/index.html dist-naive/404.html
+mkdir -p dist/naive && cp -r dist-naive/. dist/naive/
+pnpm check:parity                      # 两版静态文字逐字比对，不一致就不发
+```
 
 #### 难点 2：控制变量法——一次只改一项
 
