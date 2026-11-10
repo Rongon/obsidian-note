@@ -606,18 +606,6 @@ A：「`?tag=vue&tag=vite`，`route.query.tag` 读出来可能是 `string`、也
 - ❌ **一份代码里塞满开关**：到处写 `if (import.meta.env.VITE_NAIVE)`，代码难看，而且自己都讲不清哪儿不一样。
 - ✅ **同一份源码 + 另一个构建 mode**（当前做法）：`vite build --mode naive`，在 `vite.config.ts` 里按 `mode` 分叉——静态路由表、Element Plus 整包、`ResponsiveImage` 换成原生 `<img>`、`VersionSwitch` 换成慢版、markdown 不生成 `srcset`、另一个 HTML 入口（不带 preload）、`base` 换 `/Blog/naive/`、产物进 `dist-naive`。页面上的字、结构、样式全部来自同一份源码，两版之间只剩「优化加没加」这一个变量。
 
-
-**子路径部署有一个必踩的坑**：慢版要放在 `/Blog/naive/` 下，构建时 `base` 就必须是 `/Blog/naive/`，否则它引用资源时还会去找 `/assets/xxx.js`，整页白屏。
-
-```ts
-// vite.config.ts —— 一个 config，三种 mode
-export default defineConfig(({ mode }) => {
-  const naive = mode === 'naive'
-  const base = mode === 'ghpages' ? '/Blog/' : naive ? '/Blog/naive/' : '/'
-  return { base /* ... */ }
-})
-```
-
 **CI 里实际跑的步骤**（`.github/workflows/deploy.yml`）：
 
 ```bash
