@@ -556,6 +556,7 @@ async function loadPosts() {
 
 **（3）顺带一个类型坑。** `route.query.xxx` 的类型是 `string | null | (string | null)[]`（因为 `?tag=a&tag=b` 是合法的）。只做单选时，读取要处理掉数组的情况，别在运行时意外拿到数组。
 
+---
 ### 三、面试官会怎么问，你怎么答
 
 **Q1：「筛选状态为什么不直接放组件里？」**
