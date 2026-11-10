@@ -606,9 +606,6 @@ A：「`?tag=vue&tag=vite`，`route.query.tag` 读出来可能是 `string`、也
 - ❌ **一份代码里塞满开关**：到处写 `if (import.meta.env.VITE_NAIVE)`，代码难看，而且自己都讲不清哪儿不一样。
 - ✅ **同一份源码 + 另一个构建 mode**（当前做法）：`vite build --mode naive`，在 `vite.config.ts` 里按 `mode` 分叉——静态路由表、Element Plus 整包、`ResponsiveImage` 换成原生 `<img>`、`VersionSwitch` 换成慢版、markdown 不生成 `srcset`、另一个 HTML 入口（不带 preload）、`base` 换 `/Blog/naive/`、产物进 `dist-naive`。页面上的字、结构、样式全部来自同一份源码，两版之间只剩「优化加没加」这一个变量。
 
-  > 曾经用过「检出 `v0-naive` 这个 tag 单独构建」的写法。它的问题是 tag 里的文案与结构停在优化那天——首页标题改过、导航改过、项目页删了又加回来，于是「快版 vs 慢版」同时差着性能和内容两样东西，读者分不清看到的差别是谁带来的。细节见后文「历史记录」。
-
-这种方式的好处是：**两版之间只有一个变量**。代价是不能再说「这是当年那份代码」，能说的是「同一份源码，起点是未优化那版，优化是逐项加上去的，`naive` mode 把这个起点原样重建」—— 这句话不唬人，但它经得起比对。
 
 **子路径部署有一个必踩的坑**：慢版要放在 `/Blog/naive/` 下，构建时 `base` 就必须是 `/Blog/naive/`，否则它引用资源时还会去找 `/assets/xxx.js`，整页白屏。
 
