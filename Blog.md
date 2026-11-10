@@ -493,7 +493,7 @@ function updateQuery(patch: Record<string, string | number | undefined>) {
 
 这是最容易被忽略、但一定会发生的边界 bug。
 
-**场景**：你在第 5 页，点了一个只有 2 页的分类。请求发出去的是 `page=5` 加上新分类，后端返回空数组，页面显示「暂无文章」——但明明有文章。用户的第一反应是「这个网站坏了」。
+**场景**：你在第 5 页，点了一个只有 2 页的分类。筛选是在浏览器里算的（`postService` 先 `filter` 再 `slice`），但 `page=5` 没跟着变——`Math.min(Math.max(1, page), totalPages)` 会把 5 夹回 2，于是你看到的是「第 2 页」；如果没有这层夹取，`slice(start, start + pageSize)` 直接切出空数组，页面显示「暂无文章」。两种表现都是错的：用户点新分类，期望的是回到第 1 页。
 
 **规则**：**筛选条件变化时必须把 `page` 重置为 1**；反过来，**翻页时不能重置其他筛选条件**。
 
