@@ -577,8 +577,6 @@ A：「会出现『暂无文章』的假空态。所以规则是：筛选条件�
 **Q6：「标签要多选的话，URL 里怎么放数组？」**
 A：「`?tag=vue&tag=vite`，`route.query.tag` 读出来可能是 `string`、也可能是 `string[]`，类型是 `string | string[] | null`，要先归一化成数组。不过这一期我们只做单选，先把范围控制住，多选留作以后的扩展点。」
 
-> 参考出处：Vue Router 官方 Programmatic Navigation（`push` / `replace` / `replace: true` 的等价关系）；vuejs/router issue #2358（`route.query` 异步更新、query 不自动合并的真实讨论）。
-
 ---
 
 ## 2.5 优化前后双版本与数据汇总
