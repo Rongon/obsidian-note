@@ -302,7 +302,7 @@ import.meta.glob(`${dir}/*.md`)   // 报错：glob 只接受字面量
 ---
 #### 难点 5：`v-html` 与 XSS 边界
 
-**为什么非要用 v-html**：Markdown 转出来是一段 HTML **字符串**。Vue 模板默认把字符串当**文本**渲染（你会看到页面上直接显示 `<h2>` 这几个字），所以必须用 `v-html` 明确告诉 Vue「这段是 HTML」。
+**为什么非要用 v-html**：Markdown 转出来是一段 HTML **字符串**。Vue 模板默认把字符串当**文本**渲染（页面上会直接显示 `<h2>` 这几个字），所以必须用 `v-html` 明确告诉 Vue「这段是 HTML」。
 
 **风险从哪来**：`v-html` 等价于 `element.innerHTML = 字符串`，**不转义、不校验**。
 
@@ -312,22 +312,10 @@ import.meta.glob(`${dir}/*.md`)   // 报错：glob 只接受字面量
 <script>alert(1)</script>
 ```
 
-**一个几乎所有人都误判的细节**：通过 `innerHTML` 插入的 `<script>` **不会执行**，但 `onerror`、`onload`、`href=javascript:` 这些**会执行**。所以「script 不跑就没风险」是错觉——上面第一行就能把 cookie 偷走。
+**一个几乎所有人都误判的细节**：通过 `innerHTML` 插入的 `<script>` **不会执行**，但 `onerror`、`onload`、`href=javascript:` 这些**会执行**。所以「script 不跑就没风险」是错觉——上面第一行就能把 token 读走。
 
-**防护手段，从根本到兜底五层**：
+首先，本项目 HTML 由构建期从仓库生成，不接受外部 HTML。
 
-1. **源头可控**：内容只来自自己的仓库，不接受用户直接投稿 HTML → 本项目就走这条。
-2. **渲染后净化（最关键）**：用 DOMPurify 过一遍，按白名单只留安全标签和属性。
-
-```js
-import DOMPurify from 'dompurify'
-
-const safeHtml = DOMPurify.sanitize(rawHtml)   // 白名单净化
-```
-
-3. **解析器关掉裸 HTML**：`new MarkdownIt({ html: false })`，让 Markdown 里写不了裸 HTML。
-4. **CSP 响应头**：声明 `Content-Security-Policy` 禁止内联脚本，即使注入成功也执行不了。不改代码就能加的一道墙。
-5. **Cookie 加 HttpOnly**：`document.cookie` 读不到登录态，脚本偷不走身份。
 
 ---
 
