@@ -167,6 +167,7 @@ A：「也可以用，但评论区是高频交互，等 1–2 秒的体感很差
 
 ## 2.3 Markdown 内容管线
 
+用 Vite 插件在构建期把 Markdown 编译成 HTML，客户端不打包解析器与高亮器，并自动生成目录锚点。
 ### 一、它解决的问题
 
 Markdown 文件不是网页：浏览器拿到 `.md` 原文没法直接显示，必须先解析成 HTML。
@@ -183,11 +184,6 @@ Markdown 文件不是网页：浏览器拿到 `.md` 原文没法直接显示，�
 ### 二、技术难点到底在哪
 
 #### 难点 1：构建时 vs 运行时（一切的根）
-
-Markdown 文件本身不是网页，必须先经过「解析」变成 HTML。
-
-- **运行时解析**：把原始 `.md` 文本打进产物，用户打开页面后由浏览器 JS 现场解析 → 要下载 markdown-it 解析库，还要等 JS 执行。
-- **构建时解析**：执行 `pnpm build` 时，Node 里就把 `.md` 转成 HTML 字符串写进产物 → 用户拿到就是 HTML，浏览器不做任何解析。
 
 **实现方式**：写一个 Vite 插件（或用一个现成的），在编译每个 `.md` 文件时，把它变成「HTML + 标题 + 日期」的 JS 模块。
 
@@ -244,17 +240,6 @@ export default function markdownPlugin() {
 | `transformIndexHtml(html)` | 处理 index.html 时 | 注入标签、改 HTML                   |
 | `closeBundle()`            | 打包结束时           | 收尾、生成统计文件                     |
 
-**三句话读懂上面那段代码**：
-
-1. Vite 读到 `hello.md` 的内容，交给 `transform`；
-2. 我们把它换成 `export default 一段 HTML 字符串` 这样的 **JS 代码**；
-3. 于是 `import.meta.glob('../posts/*.md')` 拿到的不再是文本，而是**已经编译好的 HTML**。
-
-`.md` 本来不是 JS，是插件**把它变成了 JS 模块**——这就是「让 Vite 支持一种新文件类型」的通用套路。
-
-**`enforce: 'pre'` 为什么必要**：要在 Vite 自己的解析之前把 `.md` 截下来，否则它会当成 JS 去解析然后报错。这正是 `enforce` 那一段的真实用途。
-`apply` 我们这里用不上（只在想让某段逻辑只在打包时跑时才写 `apply: 'build'`）。
-
 #### 难点 2：`import.meta.glob` 是什么
 
 一句话：**Vite 提供的「构建时批量导入一堆文件」的 API**。
@@ -268,10 +253,6 @@ const modules = import.meta.glob('../posts/*.md', { eager: true })
 // { '../posts/hello.md': { html, title, date }, ... }
 ```
 
-**和 fetch 的根本区别**：
-- `fetch('/posts/hello.md')` 是**运行时**才发请求，打包器完全不知道有哪些文章，也就没法优化、没法预渲染。
-- `import.meta.glob` 是**构建时**静态扫描目录，把命中的文件全部写进产物。
-
 **两个关键参数**：
 - 写 `eager: true`：同步拿到，全部打进主包（文章多了会撑大主包）。
 - 不写 eager：返回的是一堆 `() => import('...')` 函数，**每个文件切成一个独立 chunk，用到才下载**。
@@ -282,8 +263,6 @@ const modules = import.meta.glob('../posts/*.md', { eager: true })
 const dir = '../posts'
 import.meta.glob(`${dir}/*.md`)   // 报错：glob 只接受字面量
 ```
-
-对比记忆：`import.meta.env`（Vite 注入的环境变量）、`import.meta.url`（模块自身地址）也在 `import.meta` 上，但只有 `glob` 是 Vite 扩展。
 
 #### 难点 3：动态 `import()` —— 打包器唯一的分包信号
 
