@@ -533,18 +533,6 @@ async function loadPosts() {
 }
 ```
 
-被 abort 的请求会抛 `CanceledError`，要单独 catch 掉，别当成网络错误弹提示。
-
-> 这条正好接上 Vue 笔记里的坑：「watch 里发请求不做 `onWatcherCleanup`」。Vue 3.5 里可以直接用：
->
-> ```ts
-> watch(() => route.query, async (q, _, onCleanup) => {
->   const controller = new AbortController()
->   onCleanup(() => controller.abort())   // 下次触发时先取消上一次
->   // ...
-> }, { immediate: true })
-> ```
-
 **面试里的说法**：「这里有个竞态：快速切换筛选条件时，先发的请求可能后返回，把新结果覆盖掉，导致 URL 和页面数据不一致。我用两条措施——请求序号用来丢弃过期响应，`AbortController` 用来真正取消上一个请求。这是 URL 驱动状态下必然会遇到的并发问题。」
 
 ---
