@@ -2477,6 +2477,7 @@ watchEffect(() => {
 |**确切知道只监听哪几个数据**|`watch`|精准追踪，绝不误触发，代码好懂|
 |**监听深层嵌套的复杂对象**|`watchEffect` 或 `watch + deep`|`watchEffect` 天然深追踪，不用手动配 `deep: true`|
 |**回调内部依赖非常多变，懒得写数组**|`watchEffect`|自动收集，改代码时不用同步改依赖数组|
+
 ---
 #### setup 函数有什么作用？
 
