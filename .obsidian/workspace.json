@@ -50,7 +50,7 @@
             }
           }
         ],
-        "currentTab": 2
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -114,7 +114,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "WorkExperience.md",
+                "file": "Blog.md",
                 "followCursor": false,
                 "showSearch": true,
                 "searchQuery": ""
@@ -230,11 +230,11 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "b4a73bf02849b5be",
+  "active": "c55d575e5b0772a5",
   "lastOpenFiles": [
+    "WorkExperience.md",
     "Blog.md",
     "Interview2026.md",
-    "WorkExperience.md",
     "_archive/Blog-hardest-2026-11-11.md",
     "_apply_resume.py",
     "_archive/Blog-2026-11-08-before-cleanup.md",
