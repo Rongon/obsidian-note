@@ -49,7 +49,8 @@
               "title": "WorkExperience"
             }
           }
-        ]
+        ],
+        "currentTab": 2
       }
     ],
     "direction": "vertical"
@@ -113,7 +114,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Interview2026.md",
+                "file": "WorkExperience.md",
                 "followCursor": false,
                 "showSearch": true,
                 "searchQuery": ""
@@ -229,11 +230,11 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "c8962521f7c6699a",
+  "active": "b4a73bf02849b5be",
   "lastOpenFiles": [
-    "WorkExperience.md",
-    "Interview2026.md",
     "Blog.md",
+    "Interview2026.md",
+    "WorkExperience.md",
     "_archive/Blog-hardest-2026-11-11.md",
     "_apply_resume.py",
     "_archive/Blog-2026-11-08-before-cleanup.md",

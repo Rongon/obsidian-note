@@ -453,7 +453,7 @@ watch(() => route.query, loadPosts, { immediate: true })
 router.push({ query: { ...route.query, page: 2 } })
 ```
 
-这不是我瞎说：vue-router 官方仓库里就有人因为这个行为，被迫写了一个 `useQueryManager` 来统一管理（issue #2358），可见这是真实会咬人的坑。
+这不是我瞎说：vue-router 官方仓库里就有人因为这个行为，被迫写了一个 `useQueryManager` 来统一管理。
 
 **更好的做法是「全站只留一个出口」**：封装 `updateQuery(patch)`，任何地方改筛选都走它，不在各个组件里各写一遍 `router.push`。
 
@@ -865,7 +865,7 @@ A：「统计的是 Lighthouse 网络审计里**首屏实际请求到的脚本�
 
 答：自己写的 Vite 插件在**构建时**用 markdown-it + Shiki 把 `.md` 编译成 HTML，产物里只有字符串。客户端不下载解析器和主题，省掉几十 KB，而且首屏不用等 JS 解析完才有内容。代价是改文章要重新构建部署 —— 对博客可以接受。
 
-==🔴**B2. 把 Element Plus 从全量引入改成按需，为什么能省 200 KB？**==
+**B2. 把 Element Plus 从全量引入改成按需，为什么能省 200 KB？**
 
 答：全量 `app.use(ElementPlus)` 会注册 80 多个组件，打包器没法证明「你没用到剩下的」，tree shaking 直接失效。按需引入后只注册 2 个组件 + 2 个命令式服务，其余组件模块在构建期被删掉；阶段 3 记录是入口 403 KiB → 290 KiB（现在功能变多，约 304 KiB / gzip 92 KiB）。**估库体积别看 node_modules，看入口包里它占多少。**
 
