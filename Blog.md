@@ -3,7 +3,7 @@
 
 **项目介绍**
 
-个人博客：基于 Vue 3 + TypeScript + Vite + Pinia，支持文章检索与阅读、GitHub 登录与评论、深浅色主题；同一份源码构建「优化前 / 优化后」两个版本部署在同一域名下，站点本身即性能优化对象。在线地址 https://rongon.github.io/Blog/
+个人博客：基于 Vue 3 + TypeScript + Vite + Pinia，支持文章检索与阅读、GitHub 登录与评论、深浅色主题；同一份源码构建优化前 / 优化后两个版本部署在同一域名下，站点本身即性能优化对象。在线地址 https://rongon.github.io/Blog/
 
 **项目职责**
 
