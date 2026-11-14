@@ -232,6 +232,7 @@
   },
   "active": "c55d575e5b0772a5",
   "lastOpenFiles": [
+    "_expand_concurrent.py",
     "_fix_key.py",
     "_expand_rollback.py",
     "_expand_idem.py",
@@ -250,7 +251,6 @@
     "_blog_bak.md",
     "_vertical.py",
     "_rewrite.py~RF15ecc23.TMP",
-    "_rewrite.py",
     "file:D:/Commun/Note/中国共产党简史笔记.md",
     "Vue3.md",
     "Typescript.md",
