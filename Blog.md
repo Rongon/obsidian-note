@@ -47,13 +47,14 @@
 3. 找到**占比最大的那一项**先动它，其余先不管；
 4. 改一项、测一次、记录一次（具体怎么记录见重难点 5）。
 
+---
 #### 难点 2：12 项优化（按鱼皮的 12 项逐条对照）
 
 **传输层（4 项，全是平台层，我一个都没做）**
 
 1. **升级服务器带宽** ❌ ｜ 应该这么做：先看 `Network` 面板确认瓶颈是不是带宽——TTFB 正常但单个大文件下载慢才是带宽；串行请求多的话，升带宽没用。确认后按峰值升配或改按量计费，纯静态站有 CDN 时带宽只需覆盖回源流量。
 
-2. **CDN 内容分发** ❌ ｜ 应该这么做：域名 CNAME 到 CDN（Cloudflare / 阿里云 CDN / 腾讯 EdgeOne），源站填 GitHub Pages 或自己的服务器；配两条规则——`index.html` 用 `no-cache`、`/assets/*`（带 hash）用长缓存；顺手开 HTTP/2 和 Brotli。必须做用量封顶 + 流量告警（鱼皮被刷过上万元流量费）。验证看 `curl -I` 里的 `X-Cache: HIT` 和 `Via`。
+2. **CDN 内容分发** ❌ ｜ 应该这么做：域名 CNAME 到 CDN（Cloudflare / 阿里云 CDN / 腾讯 EdgeOne），源站填 GitHub Pages 或自己的服务器；配两条规则——`index.html` 用 `no-cache`、`/assets/*`（带 hash）用长缓存；顺手开 HTTP/2 和 Brotli。必须做用量封顶 + 流量告警（被刷上万元流量费）。验证看 `curl -I` 里的 `X-Cache: HIT` 和 `Via`。
 
 3. **浏览器缓存（HTTP 缓存头）** ❌ ｜ 应该这么做：按文件类型分策略，不搞一刀切——`index.html` 用 `no-cache`（每次回源验证），`/assets/*` 因为文件名带 hash 所以用 `public, max-age=31536000, immutable`。Nginx 写法 `location /assets/ { add_header Cache-Control "public, max-age=31536000, immutable"; }`；Cloudflare Pages 写在 `_headers` 文件里。验证看 DevTools 的 `Size` 列出现 `(disk cache)`。
 
