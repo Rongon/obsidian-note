@@ -232,6 +232,8 @@
   },
   "active": "c55d575e5b0772a5",
   "lastOpenFiles": [
+    "_fix_q4.py",
+    "_add_perf_qa.py",
     "WorkExperience.md",
     "Blog.md",
     "_rewrite4.py",
@@ -249,7 +251,6 @@
     "_fixblank.py",
     "_ins.py",
     "_fix2.py",
-    "_fix_score.py",
     "file:D:/Commun/Note/中国共产党简史笔记.md",
     "Vue3.md",
     "Typescript.md",
