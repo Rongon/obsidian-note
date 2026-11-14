@@ -50,7 +50,7 @@
             }
           }
         ],
-        "currentTab": 2
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -114,7 +114,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "WorkExperience.md",
+                "file": "Blog.md",
                 "followCursor": false,
                 "showSearch": true,
                 "searchQuery": ""
@@ -230,12 +230,12 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "b4a73bf02849b5be",
+  "active": "c55d575e5b0772a5",
   "lastOpenFiles": [
+    "WorkExperience.md",
+    "Blog.md",
     "_rewrite4.py",
     "_bak_we_2208.md",
-    "Blog.md",
-    "WorkExperience.md",
     "Interview2026.md",
     "_archive/Blog-hardest-2026-11-11.md",
     "_apply_resume.py",
@@ -251,7 +251,6 @@
     "_fix2.py",
     "_fix_score.py",
     "file:D:/Commun/Note/中国共产党简史笔记.md",
-    "_edit_we.py",
     "Vue3.md",
     "Typescript.md",
     "_bak2.md",
