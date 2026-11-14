@@ -64,7 +64,7 @@
 
 5. **图片转 WebP** ✅ ｜ 21 张 JPG → WebP，总 36.6 MB → 21.8 MB（−40%）；编码质量用默认 80。
 
-6. **代码压缩 / tree shaking** ✅（只做了「按需引入」这半边）｜ 压缩和摇树是打包工具的默认行为，Vite 开箱就有；我亲手补的是「不破坏 tree shaking 的前提」：Element Plus 从全量 `app.use` 改成只注册 2 个组件（`ElButton` / `ElPagination`）+ 2 个命令式服务（`ElMessage` / `ElMessageBox`），样式也逐组件引——全量注册会让摇树直接失效。入口 chunk 403 KiB → 290 KiB（−28%）；现在约 304 KiB、gzip 92 KiB。
+6. **按需引入** ✅ Element Plus 从全量 `app.use` 改成只注册 2 个组件（`ElButton` / `ElPagination`）+ 2 个命令式服务（`ElMessage` / `ElMessageBox`），样式也逐组件引——全量注册会让摇树直接失效。入口 chunk 403 KiB → 290 KiB（−28%）；现在约 304 KiB、gzip 92 KiB。
 
 7. **GZIP 传输压缩** ❌ ｜ 应该这么做：Nginx 三行 `gzip on; gzip_types text/css application/javascript application/json image/svg+xml; gzip_min_length 1024;`；Node 用 `compression` 中间件。图片和 woff2 不要再压，它们本来已经压过。有 Brotli 就优先 br、回退 gzip。验证：`curl -H 'Accept-Encoding: gzip' -I` 看有没有 `Content-Encoding`——我在 GitHub Pages 上就是这么测出「有 gzip、没有 Brotli」的。
 
