@@ -538,6 +538,7 @@ function updateQuery(patch: Record<string, string | number | undefined>) {
 }
 ```
 
+---
 #### 难点 3：`push` 还是 `replace` —— 别把历史记录弄脏
 
 浏览器的历史记录是留给「用户可能想回退的那一步」的。
@@ -554,6 +555,7 @@ function updateQuery(patch: Record<string, string | number | undefined>) {
 
 `router.replace({ query })` 和 `router.push({ query, replace: true })` 是等价的，官方文档明确写了这一点。
 
+---
 #### 难点 4：改筛选条件必须重置分页（真实边界 bug）
 
 这是最容易被忽略、但一定会发生的边界 bug。
@@ -573,8 +575,9 @@ function updateQuery(patch: Record<string, string | number | undefined>) {
 - 第二个请求（React）也发出去了，耗时 100ms，先回来，渲染 React 列表 ✅
 - **800ms 后，Vue 的响应才回来，把 React 的结果覆盖成了 Vue** ❌
 
-此时地址栏明明是 `category=react`，页面上却是 Vue 的文章——**URL 和数据不一致了**。而且这个问题在本地几乎不会出现（接口都是几毫秒），一上线、或面试官在慢网络下点两次，它就冒出来了。这是「面试现场演示翻车」的高危项。
+此时地址栏明明是 `category=react`，页面上却是 Vue 的文章——**URL 和数据不一致了**。而且这个问题在本地几乎不会出现（接口都是几毫秒），一上线、或面试官在慢网络下点两次，它就冒出来了。这是影响用户使用体验的高危项。
 
+---
 两种解法，建议一起用：
 
 1. **AbortController 真取消**：发新请求前先把上一个掐掉，axios 通过 `signal` 支持。
