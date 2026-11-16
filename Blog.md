@@ -471,6 +471,7 @@ const page = ref(1)
 
 用户每点一次筛选，本质上就是**改了一次 URL**；页面显示什么，完全由这一串参数决定。这就是「单一数据源」。
 
+---
 ### 二、技术难点到底在哪
 
 #### 难点 1：URL 是唯一真相源（一切的根）
@@ -495,6 +496,7 @@ watch(() => route.query, loadPosts, { immediate: true })
 
 写入也只有一个入口：改 URL。**UI 是 URL 的纯函数。**
 
+---
 三个细节：
 
 - **要 `watch` 的是 `() => route.query`，不是 `route` 整体。** 监听整个 `route` 会在 hash、params 变化时也触发；监听 `route.query` 才只在筛选真的变了时触发。
@@ -503,6 +505,7 @@ watch(() => route.query, loadPosts, { immediate: true })
 
 **面试里可以这么说**：「我没有在组件里存任何筛选状态，`route.query` 就是唯一的状态。组件里只有 `computed` 从它派生，只有 `router.push` 改它。这样『不一致』这个 bug 在结构上就不可能发生。」
 
+---
 #### 难点 2：`router.push` 不会帮你合并 query
 
 **反直觉但必须记住**：`router.push({ query: { page: 2 } })` **不会**把现有的 query 合并进来，其他参数会被整个丢掉。
