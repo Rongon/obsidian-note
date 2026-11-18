@@ -232,6 +232,12 @@
   },
   "active": "b4a73bf02849b5be",
   "lastOpenFiles": [
+    "_fix3.py",
+    "_bak_we_before_fmt.md",
+    "_fmtqa.py",
+    "_adda.py",
+    "_fixrule.py",
+    "_addq.py",
     "_exp24b.py",
     "_exp24.py",
     "_exp23.py",
@@ -240,11 +246,6 @@
     "_bak_we_reorder.md",
     "_reorder.py",
     "Blog.md",
-    "_expand_concurrent.py",
-    "_fix_key.py",
-    "_expand_rollback.py",
-    "_expand_idem.py",
-    "_fix_q4.py",
     "WorkExperience.md",
     "_bak_we_2208.md",
     "Interview2026.md",
@@ -277,7 +278,6 @@
     "Interview.md",
     "Blog-知识点.md",
     "MCP.md",
-    "Program2026.md",
     "未命名.canvas"
   ]
 }
