@@ -232,6 +232,8 @@
   },
   "active": "b4a73bf02849b5be",
   "lastOpenFiles": [
+    "_exp24b.py",
+    "_exp24.py",
     "_exp23.py",
     "_ins.py",
     "_reorder2.py",
@@ -243,9 +245,7 @@
     "_expand_rollback.py",
     "_expand_idem.py",
     "_fix_q4.py",
-    "_add_perf_qa.py",
     "WorkExperience.md",
-    "_rewrite4.py",
     "_bak_we_2208.md",
     "Interview2026.md",
     "_archive/Blog-hardest-2026-11-11.md",
