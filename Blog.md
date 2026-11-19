@@ -757,20 +757,6 @@ A：「统计的是 Lighthouse 网络审计里**首屏实际请求到的脚本�
 「这个项目用 CI，主要为了证明对照结果有效。我做的是『优化前 vs 优化后』双版本对照，前提是两版内容完全一样；只要内容出现偏差，我就证明不了性能差异来自优化。所以我把『逐页逐字比对两版』做成了发布前的强制检查：脚本 exit 1，部署 job 就不会执行，线上保持上一版。另外两份产物必须来自同一次构建、同一次发布——手工做是本地构建两次推两次，CI 里是同一个 job 出两份、原子发布。顺带的好处是构建产物不进仓库，仓库里只有源码。」
 
 ---
-**这个项目里 CI 具体做了 11 步：**
-
-1. `actions/checkout@v4` —— 拉代码
-2. `pnpm/action-setup@v4`（version 11）—— 装 pnpm
-3. `actions/setup-node@v4`（node 22，`cache: pnpm`）—— 装 Node，缓存依赖
-4. `pnpm install --frozen-lockfile` —— 严格按 lockfile 装，锁文件对不上直接失败
-5. `pnpm build --mode ghpages` —— 构建主站，base 从 `/` 换成 `/Blog/`
-6. `cp dist/index.html dist/404.html` —— 静态服务器没有 SPA 回退，复制一份让深链接能刷新
-7. `vite build --mode naive` —— **同一份源码再构建一次**，产出慢版到 `dist-naive`
-8. `node scripts/copy-naive-images.mjs` —— 把 raw-images 的原图拷进慢版产物
-9. `mv` + `cp` + `cp -r` —— 慢版入口改名成 `index.html`，整体塞进 `dist/naive/`
-10. `pnpm check:parity` —— **逐页逐字比对两版**，不一致就 `exit 1`
-11. `upload-pages-artifact@v3` → `deploy-pages@v4` —— 上传并发布到 GitHub Pages
-
 **为什么用 CI，而不是「本地构建好再推上去」：**
 
 | 本地推产物（gh-pages 分支） | CI 构建（Actions） |
@@ -780,10 +766,13 @@ A：「统计的是 Lighthouse 网络审计里**首屏实际请求到的脚本�
 | 两次构建的机器环境可能不同，出来的产物有差异 | 同一台 runner、同一个 Node 版本，可复现 |
 | 「比对两版是否一致」要靠人记得跑 | 第 10 步是硬门禁，不通过就不发布 |
 
+---
 **核心设计：失败即阻断。** `check:parity` 是一个零依赖 Node 脚本（`scripts/check-parity.mjs`），它起本地静态服务、用 CDP 驱动 runner 自带的 Chrome，逐路由把两版的可见文字抽出来比对。只要有一处文字不同，脚本 `exit 1` → job 失败 → `deploy` 因为 `needs: build` 不会执行 → **线上保持上一版**。宁可这次不发，也不发一个「差异不只是性能」的对照版，否则整个对照实验的说服力就没了。
 
+---
 **为什么能白嫖**：公开仓库的 Actions 完全免费、不限分钟数；这个是 public repo，所以一条成本都不用算。
 
+---
 **面试怎么说（30 秒版）**：
 「我用的 CI 是 GitHub Actions。推 main 之后它会自动装依赖、构建两次——一次正常构建发到 `/Blog/`，一次用 `--mode naive` 构建发到 `/Blog/naive/`，然后跑一个零依赖的比对脚本，用 CDP 驱动无头 Chrome 把两版每个路由的正文抽出来逐字比，只要有一处不一致就 exit 1，整个发布就断了。这么做是因为我这个站的核心卖点是『两版之间只有性能一个变量』，如果内容都能悄悄漂移，那个对照就没有意义了，所以我把这件事做成了发布门禁，而不是靠我记得手动跑。」
 
