@@ -58,7 +58,7 @@
 
 5. **图片转 WebP** ✅ ｜ 21 张 JPG → WebP，总 36.6 MB → 21.8 MB（−40%）；编码质量用默认 80。
 
-6. **按需引入** ✅ Element Plus 从全量 `app.use` 改成只注册 2 个组件（`ElButton` / `ElPagination`）+ 2 个命令式服务（`ElMessage` / `ElMessageBox`），样式也逐组件引——全量注册会让摇树直接失效。入口 chunk 403 KiB → 290 KiB（−28%）；现在约 304 KiB、gzip 92 KiB。
+6. **按需引入** ✅ ｜ Element Plus 从全量 `app.use` 改成只注册 2 个组件（`ElButton` / `ElPagination`）+ 2 个命令式服务（`ElMessage` / `ElMessageBox`），样式也逐组件引——全量注册会让摇树直接失效（打包器没法证明「你没用到剩下的 80 多个」）。入口 chunk 现在约 304 KiB、gzip 92 KiB；它与第 9 项的拆分是叠加关系，体积差的归属统一写在第 9 项，这里不重复认领。
 
 7. **GZIP 传输压缩** ❌ ｜ 应该这么做：Nginx 三行 `gzip on; gzip_types text/css application/javascript application/json image/svg+xml; gzip_min_length 1024;`；Node 用 `compression` 中间件。图片和 woff2 不要再压，它们本来已经压过。有 Brotli 就优先 br、回退 gzip。验证：`curl -H 'Accept-Encoding: gzip' -I` 看有没有 `Content-Encoding`——我在 GitHub Pages 上就是这么测出「有 gzip、没有 Brotli」的。
 
