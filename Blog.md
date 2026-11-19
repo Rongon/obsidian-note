@@ -751,18 +751,6 @@ A：「统计的是 Lighthouse 网络审计里**首屏实际请求到的脚本�
 
 **是什么**：CI = Continuous Integration，持续集成。一句话：**代码一推上去，机器自动把「装依赖 → 构建 → 校验 → 发布」跑一遍**，人不用在本地点。
 
-| 词 | 在这里指什么 |
-| --- | --- |
-| CI 服务 | GitHub Actions（仓库自带，不用买服务器、不用装 Jenkins） |
-| workflow | 一个 YAML 文件：`.github/workflows/deploy.yml` |
-| 触发 | `on: push: branches: [main]`，推 main 就跑；也可以去 Actions 页面手动点一次（`workflow_dispatch`） |
-| job | 两个：`build`（构建产物）和 `deploy`（发布），后者 `needs: build`，build 挂了 deploy 不会跑 |
-| step | job 里的一步，`run:` 后面就是命令行 |
-| runner | GitHub 提供的临时虚拟机，`ubuntu-latest`，跑完就销毁 |
-| artifact | job 之间传文件用：build 把 `dist` 打包上传，deploy 取下来发布（`upload-pages-artifact` + `deploy-pages`） |
-| permissions | 只给需要的权限：`contents: read`、`pages: write`、`id-token: write` |
-| concurrency | `group: pages`、`cancel-in-progress: true`：连推两次，前一次没发完就被取消，不会互相覆盖 |
-
 **这个项目里 CI 具体做了 11 步：**
 
 1. `actions/checkout@v4` —— 拉代码
