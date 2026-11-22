@@ -959,7 +959,22 @@ A：会，所以脚本只比「正文可见文字」，不比 DOM 结构、不�
 
 **Q5.1「一份源码怎么出两个版本？改的是哪几个配置项？」**
 
-答法：靠 Vite 的构建模式。`vite.config.ts` 里是 `defineConfig(({ mode }) => ...)`，`--mode naive` 进来后走另一个分支，改五处：`base`（`/Blog/` → `/Blog/naive/`）、`outDir`（`dist` → `dist-naive`）、`input`（`index.html` → `index.naive.html`）、别名（`ResponsiveImage.vue` → `ResponsiveImage.naive.vue`、`VersionSwitch.vue` → 慢版，路由表 `index.ts` → `index.naive.ts`）、插件参数（`markdown({ naive: true })` 让图片退回原图）。Element Plus 也在这一支换成整包注册的 `element.naive.ts`。
+答法：分两类。
+
+**第一类，`vite.config.ts` 里按 `mode` 分支的配置，4 组 6 个值：**
+
+| 组 | 值 | 换什么 |
+| --- | --- | --- |
+| `base` | `/Blog/` → `/Blog/naive/` | 资源路径前缀 |
+| 插件参数 | `markdown({ naive: true })` | 图片不生成 srcset / sizes / 懒加载，指回原图 |
+| `resolve.alias` | 2 条：`ResponsiveImage.vue`、`VersionSwitch.vue` | 换成 `.naive.vue` 的实现 |
+| `build` | `outDir: dist-naive`、`rollupOptions.input: index.naive.html` | 产物目录、入口 HTML（慢版入口里没有那两条 preload） |
+
+**第二类，根本不在配置里，靠另一个 HTML 入口替换的 3 个模块：**
+
+慢版入口是 `index.naive.html`，它的 `<script>` 指向 `src/main.naive.ts`，而 `main.naive.ts` import 的是另外两个文件——路由表 `router/index.naive.ts`（全静态导入）、`plugins/element.naive.ts`（整包注册 Element Plus）；此外它把 `useAuthStore().init()` 放回启动时同步执行。
+
+所以准确说法是：**4 组配置 + 3 个换文件的注入点**。不是「改五处」——按顿号数会数出七八个，按「配置块 + 入口替换」数才是 4 + 3，而且每一处都能指到代码。
 
 **Q5.2「两个版本一起部署，怎么保证优化前不被后来的改动污染？」**
 
