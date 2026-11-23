@@ -261,7 +261,7 @@ A：「统计的是 Lighthouse 网络审计里**首屏实际请求到的脚本�
 ---
 **服务端不判断重复，是数据库在拒绝**
 
-```sql
+```mysql
 constraint comments_client_id_unique unique (author_id, client_id)
 ```
 
@@ -269,6 +269,7 @@ constraint comments_client_id_unique unique (author_id, client_id)
 
 唯一键为什么要带 `author_id`：客户端是不可信的，有人可以永远发同一个固定值，那样会把所有用户的提交撞在一起；加上作者，冲突范围就被锁死在本人身上。
 
+---
 **一个踩过才知道的坑：错误码会撞车**
 
 表上还有一个限流触发器（`BEFORE INSERT`，同一作者 30 秒内只能发一条），它**比唯一约束先执行**。所以快速点两次时，拿到的错误可能是「请求太频繁」而不是「重复」。
