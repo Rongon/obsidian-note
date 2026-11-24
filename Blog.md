@@ -387,16 +387,6 @@ export default defineConfig({
 **项目里那 275 行的 `plugins/markdown.ts`，骨架和这个 10 行的完全一样**——区别只在钩子内部做了多少事（拆 frontmatter、接 Shiki、改图片属性、收集目录）。所以别被行数吓到，先记住这三样。
 
 ---
-
-**概念 1 · 插件就是一个普通对象**，必备要素只有一个 `name`（报错时靠它定位），其余全是钩子。
-Vite 插件 = **Rollup 插件接口 + Vite 自己的扩展钩子**。所以会写 Vite 插件，等于会写 Rollup 插件——这句话面试里可以主动说。
-
-**概念 2 · 钩子（hook）就是「在某个时机被 Vite 调用一次的函数」**。不用全学，常用的就四五个。
-
-**概念 3 · `transform` 的本质：把内容换成另一段内容还回去**。
-
-项目里的真实实现是 `plugins/markdown.ts`（275 行）。下面按**执行顺序**拆，每一步都配上那一步真正在跑的代码（省略的是工具函数，不影响理解）。
-
 ## 我的插件逐步做了什么
 
 ### 第 1 步 · Vite 启动时调用工厂，拿到插件对象
@@ -566,16 +556,31 @@ export const html = '<h2 id="…">…</h2><p>…</p><pre class="shiki">…</pre>
 **整个设计的核心价值**：`markdown-it`（gzip 27.5 KB）和 `shiki`（几 MB 的包）全都留在 Node 里跑。浏览器只拿到三段字符串，这两个库在 `package.json` 里是 `devDependencies`，产物里一个字节都没有。
 
 ---
-**常用钩子，只留 4 个**：
+**现实中常用的钩子**（按使用频率，掌握这 9 个足够应付绝大多数插件开发）：
 
-| 钩子 | 面试会被问什么 |
+| 钩子 | 什么时候被调用 | 典型用途 |
+| --- | --- | --- |
+| `name` | —（必填字段，不是钩子） | 报错时靠它在日志里定位是哪个插件 |
+| `apply` | 插件挂载时 | `'build'` / `'serve'`：只在构建或只在 dev 生效 |
+| `enforce` | 排序阶段 | `'pre'` 抢在核心插件之前，`'post'` 排到最后 |
+| `configResolved` | 配置解析完成后 | 读最终的 `base` / `mode` / `root` |
+| `configureServer` | 开发服务器启动时 | 加中间件：mock 接口、代理、本地静态服务 |
+| `resolveId` + `load` | 解析 import 时 / 需要内容时 | 接管一种新文件类型、造虚拟模块（文件不存在也能 import） |
+| `transform` | 模块内容拿到后、编译前 | 改代码：Markdown→HTML、注入常量、删调试语句 |
+| `transformIndexHtml` | 处理 `index.html` 时 | 注入 `<script>` / `<meta>`、改标题、加埋点 |
+| `generateBundle` / `closeBundle` | 产物生成后 / 打包结束 | 写 Sitemap、生成体积报告、清理临时文件 |
+
+按「想改什么」记，比按名字记有用：
+
+| 想改的东西 | 用哪个钩子 |
 | --- | --- |
-| `name` | 「报错时怎么知道是哪个插件」→ 日志里带 name |
-| `enforce: 'pre'` | 「为什么要写 pre」→ 不抢在核心插件前，`.md` 会被当 JS 解析然后报错 |
-| `configResolved(config)` | 「子路径部署怎么处理」→ 在这里拿 `config.base` |
-| `transform(src, id)` | **最常问**：「插件怎么改文件内容」→ 返回 `{ code, map }` |
+| 某个模块的内容 | `transform` |
+| 让 Vite 认识一个新后缀 | `resolveId` + `load` |
+| `index.html` | `transformIndexHtml` |
+| 开发期的网络请求 | `configureServer` |
+| 构建产物本身 | `generateBundle` / `closeBundle` |
 
-只记一句备用：**「要让 Vite 认识一种全新文件类型，用 `resolveId` + `load`；我这个只是改已有文件的内容，所以 `transform` 就够。」** 这句话能覆盖大部分追问。
+**一句话区分最容易混的两个**：`transform` 是「文件 Vite 能读到，只是不会编译」；`resolveId` + `load` 是「连读文件都归我管」（虚拟模块、远程内容、特殊后缀都属这种）。
 
 ---
 #### 难点 2：`import.meta.glob` 是什么
