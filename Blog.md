@@ -352,9 +352,7 @@ Markdown 文件不是网页：浏览器拿到 `.md` 原文没法直接显示，�
 
 **概念 1 · 插件就是一个普通对象**，必备要素只有一个 `name`（报错时靠它定位），其余全是钩子。
 
-**概念 2 · `transform` 的本质：把内容换成另一段内容还回去**。
-
-项目里的真实实现是 `plugins/markdown.ts`（275 行）。下面是主干——工具函数（frontmatter 解析、slug 生成、Shiki 单例、图片清单读取）用注释标了位置，但每一步都真实存在：
+**概念 2 · 项目里的真实实现是 `plugins/markdown.ts`（275 行）。下面是主干——工具函数（frontmatter 解析、slug 生成、Shiki 单例、图片清单读取）用注释标了位置，但每一步都真实存在：
 
 ```ts
 // plugins/markdown.ts
