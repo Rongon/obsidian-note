@@ -387,9 +387,9 @@ export default defineConfig({
 **项目里那 275 行的 `plugins/markdown.ts`，骨架和这个 10 行的完全一样**——区别只在钩子内部做了多少事（拆 frontmatter、接 Shiki、改图片属性、收集目录）。所以别被行数吓到，先记住这三样。
 
 ---
-## 我的插件逐步做了什么
+我的插件逐步做了什么：
 
-### 第 1 步 · Vite 启动时调用工厂，拿到插件对象
+第 1 步 · Vite 启动时调用工厂，拿到插件对象
 
 ```ts
 // 这个函数只被调用一次，所以里面的模块级变量可以当缓存用
@@ -399,14 +399,14 @@ export default function markdownPlugin(options: { naive?: boolean } = {}): Plugi
 }
 ```
 
-### 第 2 步 · 声明插件名和优先级
+第 2 步 · 声明插件名和优先级
 
 ```ts
 name: 'blog:markdown',    // 必填。报错时日志里靠它定位是哪个插件挂了
 enforce: 'pre',           // 抢在 Vite 核心插件之前跑，否则 .md 会被当成 JS 去解析
 ```
 
-### 第 3 步 · 在 `configResolved` 里拿到最终 base
+第 3 步 · 在 `configResolved` 里拿到最终 base
 
 ```ts
 configResolved(config) {
@@ -416,7 +416,7 @@ configResolved(config) {
 
 **为什么需要这一步**：正文里写死的是 `/images/a.webp`，部署到 `/Blog/` 下会变成 404，所以要在生成 HTML 时补前缀。这个钩子比 `transform` 先跑，正好把结果存起来给后面用。
 
-### 第 4 步 · 在 `transform` 里先过滤，只接 `.md`
+第 4 步 · 在 `transform` 里先过滤，只接 `.md`
 
 ```ts
 async transform(src, id) {
@@ -424,7 +424,7 @@ async transform(src, id) {
   if (!file.endsWith('.md')) return     // 返回 undefined = 不改内容，其余文件原样通过
 ```
 
-### 第 5 步 · 拆 frontmatter，把元数据和正文分开
+第 5 步 · 拆 frontmatter，把元数据和正文分开
 
 ```ts
 const { data, body } = parseFrontmatter(src)
@@ -434,7 +434,7 @@ const { data, body } = parseFrontmatter(src)
 
 **实现方式**：正则匹配开头 `---\n … \n---\n`，逐行 `key: value` 解析，认数组 `[a, b]`、整数、字符串三种值。没用 `gray-matter`，因为只需要这三种。
 
-### 第 6 步 · 惰性创建 Shiki 高亮器
+第 6 步 · 惰性创建 Shiki 高亮器
 
 ```ts
 const highlighter = await getHighlighter()
@@ -442,7 +442,7 @@ const highlighter = await getHighlighter()
 // 之后返回同一个 Promise —— 21 篇文章共用一份实例
 ```
 
-### 第 7 步 · 建 markdown-it，关闭裸 HTML、把高亮交给 Shiki
+第 7 步 · 建 markdown-it，关闭裸 HTML、把高亮交给 Shiki
 
 ```ts
 const md = new MarkdownIt({
@@ -463,7 +463,7 @@ const md = new MarkdownIt({
 
 **注意**：`md` 是**每篇文章新建一个**，不是全局单例。因为下面要往 `md.renderer.rules` 上挂规则，共用一个实例会让规则和 `toc` 互相污染。
 
-### 第 8 步 · 覆盖标题规则：加锚点 + 顺手收集目录
+第 8 步 · 覆盖标题规则：加锚点 + 顺手收集目录
 
 ```ts
 const toc = []                 // 这篇文章的目录，边渲染边往里 push
@@ -483,7 +483,7 @@ md.renderer.rules.heading_open = (tokens, idx, options, _env, self) => {
 
 **为什么覆盖 `renderer.rules` 而不是用正则改 HTML**：正则在 `<h2>` 里遇到嵌套标签（如行内代码）会切错；token 阶段拿到的还是结构化的文本和层级，最准。
 
-### 第 9 步 · 覆盖图片规则：性能优化好几项都在这
+第 9 步 · 覆盖图片规则：性能优化好几项都在这
 
 ```ts
 md.renderer.rules.image = (tokens, idx, options, env, self) => {
@@ -513,13 +513,13 @@ md.renderer.rules.image = (tokens, idx, options, env, self) => {
 
 **这一段是全项目最值钱的 20 行**：响应式图片、图片占位（CLS）、懒加载、双版本对照，四项优化都在这里落地。
 
-### 第 10 步 · 真正渲染
+第 10 步 · 真正渲染
 
 ```ts
 const html = md.render(body)   // 此时代码块已经被 Shiki 染成带 span 的 HTML
 ```
 
-### 第 11 步 · 拼成 JS 源码返回
+第 11 步 · 拼成 JS 源码返回
 
 ```ts
 return {
@@ -534,7 +534,7 @@ return {
 
 **注意返回的是 `{ code, map }` 而不是字符串**——这是 Rollup 的 `TransformResult` 格式，Vite 拿到后会当成一个 JS 模块继续处理。
 
-### 第 12 步 · 前端消费三个导出
+第 12 步 · 前端消费三个导出
 
 ```ts
 import { meta, toc, html } from '@/content/posts/xxx.md'
@@ -545,7 +545,7 @@ import { meta, toc, html } from '@/content/posts/xxx.md'
 
 ---
 
-## 产物长什么样
+产物长什么样：
 
 ```js
 export const meta = { title: '首屏 30MB → 1.3MB', date: '2026-10-19', tags: ['性能优化'], readingMinutes: 9 }
@@ -588,7 +588,7 @@ const modules = import.meta.glob('../posts/*.md', { eager: true })
 - 写 `eager: true`：同步拿到，全部打进主包（文章多了会撑大主包）。
 - 不写 eager：返回的是一堆 `() => import('...')` 函数，**每个文件切成一个独立 chunk，用到才下载**。
 
-**最重要的限制（面试爱问）**：路径必须是**写死的字符串字面量**，不能是变量——因为它在打包时就要静态分析出有哪些文件，那时变量还没有值。
+**最重要的限制**：路径必须是**写死的字符串字面量**，不能是变量——因为它在打包时就要静态分析出有哪些文件，那时变量还没有值。
 
 ```js
 const dir = '../posts'
