@@ -128,7 +128,7 @@ A：「给所有图片写真实的 `width` / `height`（值来自构建期生成
 ✅ **同一份源码 + 另一个构建 mode**（当前做法）：`vite build --mode naive`，在 `vite.config.ts` 里按 `mode` 分叉——静态路由表、Element Plus 整包、`ResponsiveImage` 换成原生 `<img>`、`VersionSwitch` 换成慢版、markdown 不生成 `srcset`、另一个 HTML 入口（不带 preload）、`base` 换 `/Blog/naive/`、产物进 `dist-naive`。页面上的字、结构、样式全部来自同一份源码，两版之间只剩「优化加没加」这一个变量。
 
 ---
-#### 难点 3：测量本身要标准化，否则数据不可比
+#### 难点 2：测量本身要标准化，否则数据不可比
  
 不固定条件，数据就没有可比性，面试官一问就穿。要固定的东西：
 
@@ -146,7 +146,7 @@ npx lighthouse http://localhost:4173 \
 同时要在文档里写下采集环境：Lighthouse 版本、节流模式、机器型号。面试官问「你的数字可信吗」时，答案就是「可复现：命令在 README 里，原始 JSON 在仓库里，环境也记了」。
 
 ---
-#### 难点 4：指标要选对
+#### 难点 3：指标要选对
 
 主流只认三个，也就是 Core Web Vitals：
 
@@ -391,6 +391,7 @@ export default function markdownPlugin() {
 | `transformIndexHtml(html)` | 处理 index.html 时 | 注入标签、改 HTML                   |
 | `closeBundle()`            | 打包结束时           | 收尾、生成统计文件                     |
 
+---
 #### 难点 2：`import.meta.glob` 是什么
 
 一句话：**Vite 提供的「构建时批量导入一堆文件」的 API**。
