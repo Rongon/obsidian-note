@@ -351,6 +351,43 @@ Markdown 文件不是网页：浏览器拿到 `.md` 原文没法直接显示，�
 ---
 ##### 1.2 自定义 Vite 插件只有 3 个概念
 
+**先看一个最小可用的插件**——整个文件就十来行，能跑通：
+
+```ts
+// vite-plugin-hello.ts
+import type { Plugin } from 'vite'
+
+export default function helloPlugin(): Plugin {
+  return {
+    name: 'my-plugin',              // ① 必须有：报错时靠它定位是哪个插件
+    transform(code, id) {           // ② 钩子：在“拿到模块内容后”被调用
+      if (!id.endsWith('.txt')) return   // 不是 .txt 就放过（返回 undefined = 不改）
+      return {                           // ③ 返回值：把内容换成另一段内容
+        code: `export default ${JSON.stringify(code)}`,
+        map: null,
+      }
+    },
+  }
+}
+```
+
+在 `vite.config.ts` 里挂上它就能生效：
+
+```ts
+import { defineConfig } from 'vite'
+import helloPlugin from './vite-plugin-hello'
+
+export default defineConfig({
+  plugins: [helloPlugin()],   // 插件 = 一个函数调用后返回的对象
+})
+```
+
+**跑通之后你会发现就这么三样东西**：一个 `name`、一个钩子、一个返回值。
+
+**项目里那 275 行的 `plugins/markdown.ts`，骨架和这个 10 行的完全一样**——区别只在钩子内部做了多少事（拆 frontmatter、接 Shiki、改图片属性、收集目录）。所以别被行数吓到，先记住这三样。
+
+---
+
 **概念 1 · 插件就是一个普通对象**，必备要素只有一个 `name`（报错时靠它定位），其余全是钩子。
 Vite 插件 = **Rollup 插件接口 + Vite 自己的扩展钩子**。所以会写 Vite 插件，等于会写 Rollup 插件——这句话面试里可以主动说。
 
@@ -528,6 +565,7 @@ export const html = '<h2 id="…">…</h2><p>…</p><pre class="shiki">…</pre>
 
 **整个设计的核心价值**：`markdown-it`（gzip 27.5 KB）和 `shiki`（几 MB 的包）全都留在 Node 里跑。浏览器只拿到三段字符串，这两个库在 `package.json` 里是 `devDependencies`，产物里一个字节都没有。
 
+---
 **常用钩子，只留 4 个**：
 
 | 钩子 | 面试会被问什么 |
