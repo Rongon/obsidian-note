@@ -558,29 +558,17 @@ export const html = '<h2 id="…">…</h2><p>…</p><pre class="shiki">…</pre>
 ---
 **现实中常用的钩子**（按使用频率，掌握这 9 个足够应付绝大多数插件开发）：
 
-| 钩子 | 什么时候被调用 | 典型用途 |
-| --- | --- | --- |
-| `name` | —（必填字段，不是钩子） | 报错时靠它在日志里定位是哪个插件 |
-| `apply` | 插件挂载时 | `'build'` / `'serve'`：只在构建或只在 dev 生效 |
-| `enforce` | 排序阶段 | `'pre'` 抢在核心插件之前，`'post'` 排到最后 |
-| `configResolved` | 配置解析完成后 | 读最终的 `base` / `mode` / `root` |
-| `configureServer` | 开发服务器启动时 | 加中间件：mock 接口、代理、本地静态服务 |
-| `resolveId` + `load` | 解析 import 时 / 需要内容时 | 接管一种新文件类型、造虚拟模块（文件不存在也能 import） |
-| `transform` | 模块内容拿到后、编译前 | 改代码：Markdown→HTML、注入常量、删调试语句 |
-| `transformIndexHtml` | 处理 `index.html` 时 | 注入 `<script>` / `<meta>`、改标题、加埋点 |
-| `generateBundle` / `closeBundle` | 产物生成后 / 打包结束 | 写 Sitemap、生成体积报告、清理临时文件 |
-
-按「想改什么」记，比按名字记有用：
-
-| 想改的东西 | 用哪个钩子 |
-| --- | --- |
-| 某个模块的内容 | `transform` |
-| 让 Vite 认识一个新后缀 | `resolveId` + `load` |
-| `index.html` | `transformIndexHtml` |
-| 开发期的网络请求 | `configureServer` |
-| 构建产物本身 | `generateBundle` / `closeBundle` |
-
-**一句话区分最容易混的两个**：`transform` 是「文件 Vite 能读到，只是不会编译」；`resolveId` + `load` 是「连读文件都归我管」（虚拟模块、远程内容、特殊后缀都属这种）。
+| 钩子                               | 什么时候被调用             | 典型用途                                 |
+| -------------------------------- | ------------------- | ------------------------------------ |
+| `name`                           | —（必填字段，不是钩子）        | 报错时靠它在日志里定位是哪个插件                     |
+| `apply`                          | 插件挂载时               | `'build'` / `'serve'`：只在构建或只在 dev 生效 |
+| `enforce`                        | 排序阶段                | `'pre'` 抢在核心插件之前，`'post'` 排到最后       |
+| `configResolved`                 | 配置解析完成后             | 读最终的 `base` / `mode` / `root`        |
+| `configureServer`                | 开发服务器启动时            | 加中间件：mock 接口、代理、本地静态服务               |
+| `resolveId` + `load`             | 解析 import 时 / 需要内容时 | 接管一种新文件类型、造虚拟模块（文件不存在也能 import）      |
+| `transform`                      | 模块内容拿到后、编译前         | 改代码：Markdown→HTML、注入常量、删调试语句         |
+| `transformIndexHtml`             | 处理 `index.html` 时   | 注入 `<script>` / `<meta>`、改标题、加埋点     |
+| `generateBundle` / `closeBundle` | 产物生成后 / 打包结束        | 写 Sitemap、生成体积报告、清理临时文件              |
 
 ---
 #### 难点 2：`import.meta.glob` 是什么
