@@ -347,141 +347,94 @@ Markdown 文件不是网页：浏览器拿到 `.md` 原文没法直接显示，�
 **为什么本项目自己写（约 20 行）**：
 
 1. `unplugin-vue-markdown`(社区) 的目标是「把 md 当 Vue 组件用」，我们要的是「把 md 编译成 HTML + 元数据」，它的能力对我们是多余的。
+
 ---
 ##### 1.2 自定义 Vite 插件只有 3 个概念
 
 **概念 1 · 插件就是一个普通对象**，必备要素只有一个 `name`（报错时靠它定位），其余全是钩子。
+Vite 插件 = **Rollup 插件接口 + Vite 自己的扩展钩子**。所以会写 Vite 插件，等于会写 Rollup 插件——这句话面试里可以主动说。
 
-**概念 2 · 项目里的真实实现是 `plugins/markdown.ts`（275 行）。下面是主干——工具函数（frontmatter 解析、slug 生成、Shiki 单例、图片清单读取）用注释标了位置，但每一步都真实存在：
+**概念 2 · 钩子（hook）就是「在某个时机被 Vite 调用一次的函数」**。不用全学，常用的就四五个。
+
+**概念 3 · `transform` 的本质：把内容换成另一段内容还回去**。
+
+项目里的真实实现是 `plugins/markdown.ts`（275 行）。**骨架只有下面这些**——细节（图片清单读取、slug 去重、Shiki 单例、naive 分支）用注释标了位置，面试不会问那些。
 
 ```ts
-// plugins/markdown.ts
-// 作用：构建时把 .md 编译成 JS 模块，浏览器不下载任何解析器
+// plugins/markdown.ts —— 主干
 import MarkdownIt from 'markdown-it'
-import { createHighlighter } from 'shiki'          // 代码高亮，只在 Node 里跑
+import { createHighlighter } from 'shiki'   // 只在 Node 里跑
 import type { Plugin } from 'vite'
 
-// ── 模块级状态（插件工厂只调用一次，这些只初始化一次）─────────────
-let base = '/'                                   // 最终生效的 base，由 configResolved 写入
-let highlighterPromise = null                    // Shiki 实例的惰性缓存（创建一次要几百毫秒）
+let base = '/'                               // configResolved 写入，给图片补子路径前缀
 
-const IMAGE_MANIFEST = loadImageManifest()       // 读 src/data/image-manifest.json（读不到就返回 {}）
-const ARTICLE_IMAGE_SIZES = '(max-width: 780px) calc(100vw - 48px), 720px'
-
-function withBase(p: string) {                   // /images/a.webp → /Blog/images/a.webp
-  if (!p.startsWith('/') || p.startsWith('//')) return p
-  return `${base.replace(/\/+$/, '')}${p}`
-}
-
-// ── 插件本体：返回一个普通对象 ────────────────────────────────
 export default function markdownPlugin(options: { naive?: boolean } = {}): Plugin {
-  const naive = options.naive === true           // 慢版构建时为 true（只影响图片）
+  const naive = options.naive === true       // 慢版：图片退回原图，别的都一样
 
   return {
-    name: 'blog:markdown',                       // 必填：报错时靠它定位
-    enforce: 'pre',                              // 抢在 Vite 核心插件之前，否则 .md 会被当 JS 解析
+    name: 'blog:markdown',
+    enforce: 'pre',                          // 抢在核心插件前，否则 .md 会被当 JS 解析
 
-    // ① 拿到最终 base（GitHub Pages 是子路径部署，图片路径要补前缀）
+    // ① 拿最终 base（GitHub Pages 是子路径部署 /Blog/）
     configResolved(config) {
       base = config.base
     },
 
-    // ② 核心钩子：把 .md 的内容换成一段 JS 源码
+    // ② 核心：把 .md 的内容换成一段 JS 源码
     async transform(src, id) {
-      const [file] = id.split('?')               // id 可能带 ?raw 之类的查询串
-      if (!file.endsWith('.md')) return          // 只处理 .md，其他文件放过
+      if (!id.split('?')[0].endsWith('.md')) return   // 只处理 .md，其他文件放过
 
-      // ③ 解析 frontmatter（自己写的极简版：只认 --- 之间的 key: value）
-      const { data, body } = parseFrontmatter(src)
+      const { data, body } = parseFrontmatter(src)    // ③ 拆出 frontmatter → meta
+      const highlighter = await getHighlighter()      // ④ Shiki 惰性单例（建一次几百毫秒）
+      const toc = []
 
-      // ④ 惰性创建 Shiki（第一次 transform 时才真正建，之后共用）
-      const highlighter = await getHighlighter()
-
-      const toc = []                             // 边渲染边收集目录
-      const usedIds = new Set()                  // 处理重名锚点
-
-      // ⑤ 建 markdown-it 实例，把代码高亮交给 Shiki
+      // ⑤ 建 markdown-it，代码高亮交给 Shiki
       const md = new MarkdownIt({
-        html: false,                             // 禁掉正文里的裸 HTML，缩小 XSS 面
-        highlight(code, lang) {
-          const target = highlighter.getLoadedLanguages().includes(lang) ? lang : 'text'
-          return highlighter.codeToHtml(code, {
-            lang: target,
-            themes: { light: 'github-light', dark: 'github-dark' },  // 双主题，显示哪套交给 CSS
-            defaultColor: 'light',
-          })
-        },
+        html: false,                                  // 禁裸 HTML，缩小 XSS 面
+        highlight: (code, lang) => highlighter.codeToHtml(code, { lang }),
       })
 
-      // ⑥ 覆盖 heading_open：给 h2/h3 加 id，同时把 toc 收集出来
+      // ⑥ 覆盖标题规则：加 id 锚点，顺便收集 toc
       //    覆盖 renderer.rules 比事后用正则改 HTML 可靠
-      md.renderer.rules.heading_open = (tokens, idx, options, _env, self) => {
-        const token = tokens[idx]
-        const level = Number(token.tag.slice(1))
-        if (level === 2 || level === 3) {
-          const text = /* 取标题的纯文本 */
-          const anchor = makeSlug(text, usedIds)   // 保留中文，重名加 -2、-3
-          token.attrSet('id', anchor)
-          toc.push({ id: anchor, text, level })
-        }
-        return self.renderToken(tokens, idx, options)
+      md.renderer.rules.heading_open = (tokens, idx, o, e, self) => {
+        // 取标题文字 → 生成 slug（保留中文、重名加 -2）→ token.attrSet('id') → toc.push(...)
+        return self.renderToken(tokens, idx, o)
       }
 
-      // ⑦ 覆盖 image：补 base + 响应式 + 真实宽高 + 懒加载（性能优化的落点就在这一步）
-      md.renderer.rules.image = (tokens, idx, options, env, self) => {
-        const token = tokens[idx]
-        const raw = token.attrs[token.attrIndex('src')][1]
-
-        // 慢版分支：换回原图 .jpg，什么都不加（这就是「优化前」）
-        if (naive) {
-          token.attrs[token.attrIndex('src')][1] = withBase(raw.replace(/\.webp$/i, '.jpg'))
-          return self.renderToken(tokens, idx, options)
-        }
-
-        // 快版：清单里有这张图，就输出 srcset + sizes + 真实宽高
-        const entry = IMAGE_MANIFEST[raw]
-        if (entry) {
-          token.attrSet('srcset', /* 各档位 + 全尺寸，带 w 描述符 */)
-          token.attrSet('sizes', ARTICLE_IMAGE_SIZES)
-          token.attrSet('width', String(entry.w))    // 宽高让浏览器先占位，避免 CLS
-          token.attrSet('height', String(entry.h))
-        }
-        token.attrs[token.attrIndex('src')][1] = withBase(raw)
-        token.attrSet('loading', 'lazy')
-        token.attrSet('decoding', 'async')
-
-        return self.renderToken(tokens, idx, options)
+      // ⑦ 覆盖图片规则：性能优化的落点都在这
+      md.renderer.rules.image = (tokens, idx, o, e, self) => {
+        // naive 时：换回 .jpg 原图，什么都不加
+        // 否则：读 image-manifest → attrSet('srcset' / 'sizes' / 'width' / 'height')
+        //       再统一加 loading="lazy" + decoding="async"
+        return self.renderToken(tokens, idx, o)
       }
 
-      // ⑧ 真正渲染（markdown-it 在 Node 里跑，产物里一个字节的解析器都没有）
-      const html = md.render(body)
+      const html = md.render(body)                    // ⑧ 真正渲染
 
       // ⑨ 返回 JS 源码：三个具名导出
-      const code = [
-        `export const meta = ${JSON.stringify(data)}`,
-        `export const toc  = ${JSON.stringify(toc)}`,
-        `export const html = ${JSON.stringify(html)}`,
-      ].join('\n')
-
-      return { code, map: null }
+      return {
+        code: [
+          `export const meta = ${JSON.stringify(data)}`,
+          `export const toc  = ${JSON.stringify(toc)}`,
+          `export const html = ${JSON.stringify(html)}`,
+        ].join('\n'),
+        map: null,
+      }
     },
   }
 }
 ```
 
-**九步归纳（面试就按这个顺序讲）**：
+**六步归纳（面试按这个讲）**：
 
 | 步 | 做什么 | 一句话 |
 | --- | --- | --- |
 | ① | `configResolved` 拿 base | 子路径部署要给图片补前缀 |
-| ② | `transform` 判断 `.md` | 不是 md 直接 `return`，别的文件不受影响 |
-| ③ | 解析 frontmatter | 标题/日期/标签单独抽出来当 `meta` |
-| ④ | 惰性建 Shiki | 创建一次要几百毫秒，别每个文件都建 |
-| ⑤ | 建 markdown-it，`html: false` | 禁裸 HTML，从源头缩小 XSS 面 |
-| ⑥ | 覆盖 `heading_open` | 边渲染边收集 toc，比用正则改 HTML 可靠 |
-| ⑦ | 覆盖 `image` | 补 base、srcset、宽高、懒加载；慢版走另一支 |
-| ⑧ | `md.render` | 解析只在 Node 跑一次 |
-| ⑨ | 返回 `export const` | `meta` / `toc` / `html` 三个导出 |
+| ② | `transform` 判断 `.md` | 不是 md 直接 `return` |
+| ③④ | 拆 frontmatter + 建 Shiki | 元数据单独抽；Shiki 只建一次 |
+| ⑤ | 建 markdown-it，`html: false` | 禁裸 HTML，缩小 XSS 面 |
+| ⑥⑦ | 覆盖 `heading_open` / `image` | 加锚点收 toc；补 srcset/宽高/懒加载 |
+| ⑧⑨ | `md.render` + 返回三个导出 | 解析只在 Node 跑一次 |
 
 **常用钩子，只留 4 个**：
 
