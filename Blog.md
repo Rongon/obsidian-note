@@ -628,29 +628,17 @@ import.meta.glob(`${dir}/*.md`)   // 报错：glob 只接受字面量
 ---
 ##### 怎么防
 
+**防御**：编码为主（框架默认转义，不用 `v-html`），净化为辅（富文本走 DOMPurify），CSP 兜底，凭证加 `HttpOnly`。
+
 1. **输出编码（根本）**：同一份数据进入 HTML 文本、HTML 属性、JS 字符串或 URL，编码规则各不相同。框架默认转义（`{{ }}`、JSX）处理的是最常见的 HTML 文本上下文，只要不用 `v-html`、`dangerouslySetInnerHTML`，默认就安全。
 2. **富文本做白名单净化**：用 DOMPurify 这种成熟库，白名单方式决定保留哪些标签、属性和协议，不要自己写正则黑名单。
 3. **URL 协议白名单**：`href`、`src` 只放 `http(s)`、`mailto` 或相对路径；拦住 `javascript:`、`vbscript:`、`data:`。
 4. **CSP 兜底**：白名单式声明哪些源可以加载和执行；先用 `Content-Security-Policy-Report-Only` 跑通，再改用强制模式。它只能挡住“代码执行”，挡不住“代码被拼进 DOM”这件事本身。
 5. **凭证保护**：cookie 加 `HttpOnly`、`Secure`、`SameSite`。注意 `HttpOnly` 只保护 cookie；token 放在 `localStorage` 就没有等价保护（这是 SPA 的真实取舍，要配合短时效和轮换）。
-6. **减少危险 sink（数据出口/收口点）**：`eval`、`new Function`、`document.write`、`innerHTML` 能不用就不用。
----
-##### 面试怎么说
-
-**定义**：XSS 是不可信数据没按上下文编码就进了 HTML、JS 上下文，浏览器把它当代码执行。分存储型、反射型、DOM 型，差别在恶意代码从哪来，以及服务端有没有参与。
-
-**防御**：编码为主（框架默认转义，不用 `v-html`），净化为辅（富文本走 DOMPurify），CSP 兜底，凭证加 `HttpOnly`。
-
-**三个最容易被追问、也最容易被答错的点**（答对一个就很加分）：
-
-1. `innerHTML` 插入的 `<script>` **不执行**，但 `onerror`、`onload`、`javascript:` **会执行**；
-2. CSP 挡“执行”，挡不住“拼装”；
-3. `HttpOnly` 保护不了 `localStorage` 里的 token。
 
 **结合自己项目一句话**：我这站只有一处 `v-html`（文章正文），HTML 在构建期从仓库里的 `.md` 生成，解析器开了 `html: false`，链接协议走 markdown-it 默认白名单；净化那一层没上，因为内容源可信，一旦开放投稿就必须补上。
 
 ---
-
 ##### 三、面试官会怎么问，你怎么答
 
 **Q1：「你的博客文章存在哪？」**
