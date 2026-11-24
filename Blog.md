@@ -358,100 +358,175 @@ Vite 插件 = **Rollup 插件接口 + Vite 自己的扩展钩子**。所以会�
 
 **概念 3 · `transform` 的本质：把内容换成另一段内容还回去**。
 
-项目里的真实实现是 `plugins/markdown.ts`（275 行）。下面只挑**真正决定插件行为的几段代码**，其余是工具函数（slug 生成、图片清单读取、Shiki 缓存），不影响理解机制。
+项目里的真实实现是 `plugins/markdown.ts`（275 行）。下面按**执行顺序**拆，每一步都配上那一步真正在跑的代码（省略的是工具函数，不影响理解）。
 
-## 一、最关键的八段代码
+## 我的插件逐步做了什么
+
+### 第 1 步 · Vite 启动时调用工厂，拿到插件对象
 
 ```ts
-// ① 必须抢在 Vite 核心插件之前——否则 .md 会被当成 JS 去解析，直接报错
-enforce: 'pre',
+// 这个函数只被调用一次，所以里面的模块级变量可以当缓存用
+export default function markdownPlugin(options: { naive?: boolean } = {}): Plugin {
+  const naive = options.naive === true    // 慢版（优化前）构建时为 true，只影响图片
+  return { /* 插件对象，下面全是它的字段 */ }
+}
+```
 
-// ② 拿到最终 base。GitHub Pages 部署在 /Blog/ 子路径下，
-//    正文里写死的 /images/x.webp 到线上会 404，所以必须提前知道前缀
+### 第 2 步 · 声明插件名和优先级
+
+```ts
+name: 'blog:markdown',    // 必填。报错时日志里靠它定位是哪个插件挂了
+enforce: 'pre',           // 抢在 Vite 核心插件之前跑，否则 .md 会被当成 JS 去解析
+```
+
+### 第 3 步 · 在 `configResolved` 里拿到最终 base
+
+```ts
 configResolved(config) {
-  base = config.base
+  base = config.base      // 本地是 '/'，GitHub Pages 子路径部署是 '/Blog/'
 },
+```
 
-// ③ 只处理 .md。不返回任何东西 = Vite 继续用原来的内容，别种文件完全不受影响
-if (!id.split('?')[0].endsWith('.md')) return
+**为什么需要这一步**：正文里写死的是 `/images/a.webp`，部署到 `/Blog/` 下会变成 404，所以要在生成 HTML 时补前缀。这个钩子比 `transform` 先跑，正好把结果存起来给后面用。
 
-// ④ 把 frontmatter 拆出来：`---` 之间的 title/date/tags 变成 meta，剩下的才是正文
+### 第 4 步 · 在 `transform` 里先过滤，只接 `.md`
+
+```ts
+async transform(src, id) {
+  const [file] = id.split('?')          // id 可能带 ?raw 之类的查询串，切掉
+  if (!file.endsWith('.md')) return     // 返回 undefined = 不改内容，其余文件原样通过
+```
+
+### 第 5 步 · 拆 frontmatter，把元数据和正文分开
+
+```ts
 const { data, body } = parseFrontmatter(src)
+// data → { title: '…', date: '2026-10-19', tags: ['性能优化'], readingMinutes: 9 }
+// body → 去掉 frontmatter 之后的 Markdown 正文
+```
 
-// ⑤ 这两行决定了安全边界和代码高亮的来源：
-//    html: false   → 禁止正文里写裸 HTML，从源头缩小 XSS 面
-//    highlight     → 代码块交给 Shiki 染色，而不是让它变成一段灰字
+**实现方式**：正则匹配开头 `---\n … \n---\n`，逐行 `key: value` 解析，认数组 `[a, b]`、整数、字符串三种值。没用 `gray-matter`，因为只需要这三种。
+
+### 第 6 步 · 惰性创建 Shiki 高亮器
+
+```ts
+const highlighter = await getHighlighter()
+// getHighlighter 内部：第一次调用才 createHighlighter()（几百毫秒），
+// 之后返回同一个 Promise —— 21 篇文章共用一份实例
+```
+
+### 第 7 步 · 建 markdown-it，关闭裸 HTML、把高亮交给 Shiki
+
+```ts
 const md = new MarkdownIt({
-  html: false,
-  highlight: (code, lang) => highlighter.codeToHtml(code, { lang }),
+  html: false,          // 禁止正文里直接写 HTML，从源头缩小 XSS 面
+  linkify: false,       // 不自动把 URL 变链接（我用不到，还省一次扫描）
+  typographer: false,   // 不做智能引号替换（中文标点没必要）
+  highlight(code, lang) {
+    // 渲染到代码块时被调用
+    const target = highlighter.getLoadedLanguages().includes(lang) ? lang : 'text'
+    return highlighter.codeToHtml(code, {
+      lang: target,
+      themes: { light: 'github-light', dark: 'github-dark' },  // 双主题，显示哪套交给 CSS
+      defaultColor: 'light',
+    })
+  },
 })
+```
 
-// ⑥ 覆盖标题渲染规则：目录不是正则扫出来的，是渲染到 h2/h3 时顺手收集的
+**注意**：`md` 是**每篇文章新建一个**，不是全局单例。因为下面要往 `md.renderer.rules` 上挂规则，共用一个实例会让规则和 `toc` 互相污染。
+
+### 第 8 步 · 覆盖标题规则：加锚点 + 顺手收集目录
+
+```ts
+const toc = []                 // 这篇文章的目录，边渲染边往里 push
+const usedIds = new Set()      // 处理重复标题（重名加 -2、-3）
+
 md.renderer.rules.heading_open = (tokens, idx, options, _env, self) => {
-  const anchor = makeSlug(text, usedIds)   // 中文保留，重名加 -2、-3
-  token.attrSet('id', anchor)              // 页内锚点跳转靠它
-  toc.push({ id: anchor, text, level })    // 侧边栏目录靠它
+  const level = Number(tokens[idx].tag.slice(1))     // h2 → 2，h3 → 3
+  if (level === 2 || level === 3) {
+    const text = /* 取标题里的纯文本 */
+    const anchor = makeSlug(text, usedIds)           // 中文保留，空格转 -
+    tokens[idx].attrSet('id', anchor)                // 页内跳转靠它
+    toc.push({ id: anchor, text, level })            // 侧边栏目录靠它
+  }
   return self.renderToken(tokens, idx, options)
 }
+```
 
-// ⑦ 图片渲染规则——整站性能优化有几项就落在这一个函数里：
-//    srcset + sizes  → 响应式图片（按槽位选档，省传输）
-//    width + height  → 图片先占位（CLS 从 0.548 归零）
-//    loading/decoding→ 懒加载 + 异步解码
-//    naive 分支      → 慢版退回原图 .jpg，什么优化都不给
-md.renderer.rules.image = (tokens, idx, options, _env, self) => {
-  if (naive) { /* 换回 .jpg 原图，直接返回 */ }
-  const entry = IMAGE_MANIFEST[raw]
+**为什么覆盖 `renderer.rules` 而不是用正则改 HTML**：正则在 `<h2>` 里遇到嵌套标签（如行内代码）会切错；token 阶段拿到的还是结构化的文本和层级，最准。
+
+### 第 9 步 · 覆盖图片规则：性能优化好几项都在这
+
+```ts
+md.renderer.rules.image = (tokens, idx, options, env, self) => {
+  const raw = tokens[idx].attrs[tokens[idx].attrIndex('src')][1]
+
+  // 分支 A：慢版（优化前）—— 换回 3000px 原图，什么优化都不加
+  if (naive) {
+    token.attrs[srcIndex][1] = withBase(raw.replace(/\.webp$/i, '.jpg'))
+    return self.renderToken(tokens, idx, options)
+  }
+
+  // 分支 B：快版 —— 查清单，有记录就输出响应式属性
+  const entry = IMAGE_MANIFEST[raw]        // { w: 3000, h: 1787, variants: [400,800,1200,1600] }
   if (entry) {
-    token.attrSet('srcset', /* 400/800/1200/1600 + 全尺寸，带 w 描述符 */)
-    token.attrSet('sizes', ARTICLE_IMAGE_SIZES)
-    token.attrSet('width', String(entry.w))
+    token.attrSet('srcset', /* 各档 + 全尺寸，带 w 描述符 */)   // 响应式图片
+    token.attrSet('sizes', ARTICLE_IMAGE_SIZES)                 // 告诉浏览器槽位多宽
+    token.attrSet('width', String(entry.w))                     // 图片先占位 → CLS 归零
     token.attrSet('height', String(entry.h))
   }
-  token.attrSet('loading', 'lazy')
-  token.attrSet('decoding', 'async')
+  token.attrs[srcIndex][1] = withBase(raw)   // 补 /Blog/ 前缀
+  token.attrSet('loading', 'lazy')           // 懒加载
+  token.attrSet('decoding', 'async')         // 异步解码
+
   return self.renderToken(tokens, idx, options)
 }
+```
 
-// ⑧ 返回的不是 HTML，是一段 JS 源码 —— 三个具名导出
+**这一段是全项目最值钱的 20 行**：响应式图片、图片占位（CLS）、懒加载、双版本对照，四项优化都在这里落地。
+
+### 第 10 步 · 真正渲染
+
+```ts
+const html = md.render(body)   // 此时代码块已经被 Shiki 染成带 span 的 HTML
+```
+
+### 第 11 步 · 拼成 JS 源码返回
+
+```ts
 return {
   code: [
     `export const meta = ${JSON.stringify(data)}`,
     `export const toc  = ${JSON.stringify(toc)}`,
     `export const html = ${JSON.stringify(html)}`,
   ].join('\n'),
-  map: null,
+  map: null,          // 不做 sourcemap：.md 是内容不是源码，调试不需要映射回去
 }
 ```
 
-## 二、执行时到底发生了什么（12 步）
+**注意返回的是 `{ code, map }` 而不是字符串**——这是 Rollup 的 `TransformResult` 格式，Vite 拿到后会当成一个 JS 模块继续处理。
 
-按时间顺序，一次 `pnpm build` 里：
+### 第 12 步 · 前端消费三个导出
 
-| # | 发生什么 | 关键点 |
-| --- | --- | --- |
-| 1 | Vite 读 `vite.config.ts`，调用 `markdownPlugin()` **一次**，登记这个插件对象 | 工厂只跑一次，所以模块级变量能当缓存 |
-| 2 | Vite 调 `configResolved(config)`，插件把 `config.base` 存进模块变量 | 此时才知道是 `/` 还是 `/Blog/` |
-| 3 | 构建开始，遇到 `src/data/posts.ts` 里的 `import.meta.glob('../../content/posts/*.md')` | 文章是被这里批量引入的 |
-| 4 | 对每个 `.md`：Vite 先读盘拿到源码，再交给 `transform(src, id)` | 读盘是 Vite 做的，插件不碰 IO |
-| 5 | `transform` 先切掉 `?raw` 之类的查询串，判断后缀，不是 `.md` 直接 `return` | 返回 `undefined` = 不改内容 |
-| 6 | `parseFrontmatter(src)` 拆出 `{ data, body }` | `data` 就是 meta，`body` 是正文 |
-| 7 | `getHighlighter()` 惰性创建 Shiki 实例 | 第一次几百毫秒，之后所有文章复用同一个 |
-| 8 | `new MarkdownIt({...})` 建解析器，登记 `highlight` 回调 | 每篇文章都新建实例，避免规则互相污染 |
-| 9 | 覆盖 `heading_open`：渲染到 h2/h3 时生成 slug、写 `id`、push 进 `toc` | 目录与锚点在这一步产生 |
-| 10 | 覆盖 `image`：查清单 → 加 `srcset`/`sizes`/`width`/`height` → 加 `lazy`/`async` → 补 base 前缀；`naive` 时只把 `.webp` 换回 `.jpg` | 性能优化项 2/3/4 的实现点 |
-| 11 | `md.render(body)` 输出 HTML 字符串 | 代码块已被 Shiki 染成带 `span` 的颜色 |
-| 12 | 拼成 `export const meta/toc/html`，返回 `{ code, map: null }`，Vite 当 JS 模块继续处理 | 产物里没有任何解析器代码 |
+```ts
+import { meta, toc, html } from '@/content/posts/xxx.md'
+// meta → 渲染标题、日期、标签、阅读时长
+// toc  → 渲染右侧目录，点击跳 #id
+// html → 用 v-html 塞进 .article-body
+```
 
-**产物长这样**（浏览器里 `import` 拿到的就是一个普通对象）：
+---
+
+## 产物长什么样
 
 ```js
-export const meta = { title: '…', date: '2026-10-19', tags: ['性能优化'], readingMinutes: 9 }
+export const meta = { title: '首屏 30MB → 1.3MB', date: '2026-10-19', tags: ['性能优化'], readingMinutes: 9 }
 export const toc  = [{ id: '第一步不是优化是测量', text: '第一步不是优化，是测量', level: 2 }, …]
 export const html = '<h2 id="…">…</h2><p>…</p><pre class="shiki">…</pre>'
 ```
 
-**这一步是整个设计的核心价值**：`markdown-it` 和 `shiki` 加起来 gzip 后几十 KB，全都在 Node 里跑掉了。浏览器只拿到一坨字符串，`package.json` 里它们在 `devDependencies`。
+**整个设计的核心价值**：`markdown-it`（gzip 27.5 KB）和 `shiki`（几 MB 的包）全都留在 Node 里跑。浏览器只拿到三段字符串，这两个库在 `package.json` 里是 `devDependencies`，产物里一个字节都没有。
 
 **常用钩子，只留 4 个**：
 
