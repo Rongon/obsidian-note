@@ -614,10 +614,7 @@ import.meta.glob(`${dir}/*.md`)   // 报错：glob 只接受字面量
 ---
 ##### 本质
 
-**不可信数据进入了执行上下文（HTML、JS、DOM），而浏览器分不清“数据”和“代码”，于是把它当代码执行了。**
-
 根因是**没有按输出上下文做编码**，“没有过滤恶意关键字”只是表象。因此好的防御是按上下文编码，黑名单并非好办法。
-
 ##### 三种类型
 
 | 类型    | 恶意代码存在哪   | 服务端参与        | 执行者      | 典型位置                                                       |
@@ -637,9 +634,6 @@ import.meta.glob(`${dir}/*.md`)   // 报错：glob 只接受字面量
 4. **CSP 兜底**：白名单式声明哪些源可以加载和执行；先用 `Content-Security-Policy-Report-Only` 跑通，再改用强制模式。它只能挡住“代码执行”，挡不住“代码被拼进 DOM”这件事本身。
 5. **凭证保护**：cookie 加 `HttpOnly`、`Secure`、`SameSite`。注意 `HttpOnly` 只保护 cookie；token 放在 `localStorage` 就没有等价保护（这是 SPA 的真实取舍，要配合短时效和轮换）。
 6. **减少危险 sink（数据出口/收口点）**：`eval`、`new Function`、`document.write`、`innerHTML` 能不用就不用。
-
-补充一句：你那份资料里“不用服务端渲染就能预防 XSS”这句要小心，这并不成立。SPA 不但不会因此更安全，反而会有更多 DOM sink（比如前端把参数拼进 `innerHTML`），DOM 型正是这么来的。
-
 ---
 ##### 面试怎么说
 
