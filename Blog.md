@@ -734,8 +734,6 @@ const page = ref(1)
 **正确做法**：组件里**不允许再存一份**，一切从 `route.query` 派生。
 
 ```ts
-const route = useRoute()
-
 const filters = computed(() => ({
   category: (route.query.category as string) ?? 'all',
   tag: (route.query.tag as string) ?? '',
@@ -743,8 +741,11 @@ const filters = computed(() => ({
   page: Number(route.query.page ?? 1) || 1,
 }))
 
-// 数据请求由 URL 驱动，而不是由组件里的 ref 驱动
-watch(() => route.query, loadPosts, { immediate: true })
+function loadPosts(f: typeof filters.value) {
+  return fetchPosts(f)
+}
+
+watch(filters, loadPosts, { immediate: true })
 ```
 
 写入也只有一个入口：改 URL。**UI 是 URL 的纯函数。**
