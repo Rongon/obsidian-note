@@ -751,15 +751,6 @@ watch(filters, loadPosts, { immediate: true })
 写入也只有一个入口：改 URL。**UI 是 URL 的纯函数。**
 
 ---
-三个细节：
-
-- **要 `watch` 的是 `() => route.query`，不是 `route` 整体。** 监听整个 `route` 会在 hash、params 变化时也触发；监听 `route.query` 才只在筛选真的变了时触发。
-- **必须用 `watch` 感知变化，不能只在 `onMounted` 里请求一次。** 同一个路由换 query 时，Vue Router 会**复用组件实例**，不会重新执行 `setup`——只在 `onMounted` 里拉数据的写法，切筛选时根本不会重新请求。
-- `immediate: true` 让首屏进入时也拉一次，不用再单独写一次初始请求。
-
-**面试里可以这么说**：「我没有在组件里存任何筛选状态，`route.query` 就是唯一的状态。组件里只有 `computed` 从它派生，只有 `router.push` 改它。这样『不一致』这个 bug 在结构上就不可能发生。」
-
----
 #### 难点 2：`router.push` 不会帮你合并 query
 
 **反直觉但必须记住**：`router.push({ query: { page: 2 } })` **不会**把现有的 query 合并进来，其他参数会被整个丢掉。
